@@ -9,7 +9,8 @@ apply plugin: "eclipse"
 
 //archiveBaseName = "properties-plugin"
 version = "1.0.0"
-group = "com.saliman.gradle"
+group = "com.saliman"
+archivesBaseName = "gradle-properties-plugin"
 ext.isSnapshot = version.endsWith("SNAPSHOT")
 
 def mavenRepoUploadUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
