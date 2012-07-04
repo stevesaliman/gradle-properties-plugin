@@ -69,7 +69,7 @@ task prep() {
 }
 
 compileJava.dependsOn << "prep"
-'''
+```
 
 The reason we copy into the source resource directory instead of the build directory is to keep IDEs happy.  In general, you'll want to run the prep (or prepTest) task whenever properties or template files change, or to switch environments.
 
