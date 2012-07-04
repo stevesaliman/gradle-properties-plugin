@@ -1,0 +1,22 @@
+# Gradle.properties has GPG info, and we don't want that checked in.
+gradle.properties
+
+# ignore Idea artifacts
+/.idea/
+*.iml
+*.ipr
+*.iws
+
+# ignore Eclipse artifacts
+/.classpath
+/.project
+/.settings
+
+# ignore things created by the build
+/build/
+/.gradle
+
+# Ignore various temporary files
+*.bak
+*.swp
+

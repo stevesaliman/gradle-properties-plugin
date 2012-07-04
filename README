@@ -1,0 +1,25 @@
+The Properties plugin is designed to make it easier to work with properties
+that change from environment to environment. When the properties plugin is
+applied, three things happen. First, the plugin looks for a
+gradle-<environmentName>.properties file in the root directory of the project
+containing properties for the project.  If no environmentName is given,
+&quot;local&quot; will be used. Properties already defined on the command line
+with the -P option will be will not be overwritten by properties in the file.
+
+Next, the plugin also creates filterTokens property containing an array
+of tokens that can be used when doing a filtered file copy.  There will be
+a token for each property defined in the given properties file. The name
+of each token will be the name of the property from the properties file,
+after converting the camel case property name to dot notation. For example,
+if you have a myPropertyName property in the file, the plugin will create
+a my.property.name filter token, whose value is the property's value.\
+
+Finally, the properties plugin also adds the {@code requiredProperty}
+and {@code requiredProperties} properties to every task in your build.
+These properties can be used to define what properties must be present for
+that task to work.  Required properties will be checked after configuration,
+is complete, but before any tasks are executed.
+
+Special thanks to Hans Dockter at Gradleware for showing me how to attach
+to the right place in the Gradle build lifecycle.
+
