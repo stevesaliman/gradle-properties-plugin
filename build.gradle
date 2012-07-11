@@ -8,12 +8,18 @@ apply plugin: "idea"
 apply plugin: "eclipse"
 
 //archiveBaseName = "properties-plugin"
-version = "1.0.0"
-group = "com.saliman"
+version = "1.0.0-SNAPSHOT"
+group = "net.saliman"
 archivesBaseName = "gradle-properties-plugin"
 ext.isSnapshot = version.endsWith("SNAPSHOT")
 
-def mavenRepoUploadUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+if ( isSnapshot ) {
+    println "using snapshot"
+	ext.mavenRepoUploadUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+} else {
+    println "using staging"
+	ext.mavenRepoUploadUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+}
 
 configurations {
 	archives
@@ -163,7 +169,7 @@ def getPomConfiguration() {
 			developer {
 				id 'stevesaliman'
 				name 'Steven C. Saliman'
-				email 'steve.saliman@gmail.com'
+				email 'support@saliman.net'
 			}
 		}
 		scm {
