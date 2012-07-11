@@ -1,4 +1,4 @@
-package com.saliman.gradle.plugin.properties
+package net.saliman.gradle.plugin.properties
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project

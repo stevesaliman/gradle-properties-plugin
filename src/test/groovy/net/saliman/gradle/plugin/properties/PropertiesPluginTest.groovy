@@ -1,7 +1,6 @@
-package com.saliman.gradle.plugin.properties
+package net.saliman.gradle.plugin.properties
 
 import org.gradle.testfixtures.ProjectBuilder
-import com.saliman.gradle.plugin.properties.PropertiesPlugin
 
 /**
  * Test class for the Properties plugin

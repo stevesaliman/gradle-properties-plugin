@@ -37,7 +37,7 @@ buildscript {
 		mavenCentral()
 	}
 	dependencies {
-		classpath 'com.saliman:gradle-properties-plugin:1.0.0'
+		classpath 'net.saliman:gradle-properties-plugin:1.0.0'
 	}
 }
 
