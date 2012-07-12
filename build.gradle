@@ -8,7 +8,7 @@ apply plugin: "idea"
 apply plugin: "eclipse"
 
 //archiveBaseName = "properties-plugin"
-version = "1.0.0-SNAPSHOT"
+version = "1.0.0"
 group = "net.saliman"
 archivesBaseName = "gradle-properties-plugin"
 ext.isSnapshot = version.endsWith("SNAPSHOT")
@@ -90,8 +90,8 @@ gradle.taskGraph.whenReady { taskGraph ->
 				allprojects { ext."signing.password" = password }
 			}
 
-			def x = ext."signing.keyId"
-			println "using key ${x}"
+			//def x = ext."signing.keyId"
+			//println "using key ${x}"
 
 			console.printf "\nThanks.\n\n"
 		}
