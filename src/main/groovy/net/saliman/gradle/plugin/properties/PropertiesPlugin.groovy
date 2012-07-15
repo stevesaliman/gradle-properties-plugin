@@ -38,13 +38,12 @@ class PropertiesPlugin implements Plugin<Project> {
 	 * with.
 	 */
 	void apply(Project project) {
-		def environmentName = "local"
-		if (project.hasProperty('environmentName') ){
-			environmentName = project.getProperties()['environmentName']
+		if ( !project.hasProperty('environmentName' ) ){
+			project.ext.setProperty('environmentName', 'local')
 		}
 
 		// Load the environment file
-		def filename = "gradle-${environmentName}.properties"
+		def filename = "gradle-${project.ext.environmentName}.properties"
 		def propertyCount = 0
 		def tokenCount = 0
 		project.file("${filename}").withReader {reader ->

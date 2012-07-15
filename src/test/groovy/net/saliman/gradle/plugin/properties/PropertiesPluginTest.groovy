@@ -19,6 +19,9 @@ class PropertiesPluginTest extends GroovyTestCase {
 						     tofile : "${project.projectDir}/gradle-test.properties")
 	}
 
+	/**
+	 * Test the CheckProperty method when the property is missing.
+	 */
 	public void testCheckPropertyMissing() {
 		project.ext.someProperty = "someValue"
 		// we succeed if we don't get an exception.
@@ -26,6 +29,9 @@ class PropertiesPluginTest extends GroovyTestCase {
 
 	}
 
+	/**
+	 * Test the checkProperty method when the property is missing.
+	 */
 	public void testCheckPropertyPresent() {
 		// we succeed if we don't get an exception.
 		shouldFail(MissingPropertyException) {
@@ -34,17 +40,24 @@ class PropertiesPluginTest extends GroovyTestCase {
 
 	}
 
-	// build with no value, assert that we got the property set from local and
-	// token is right.
+	/**
+	 * Try a build with no environment name given.  Assert that we got the
+	 * property from the local file and that the token is right.  Also make sure
+	 * the plugin has set the environmentName property.
+	 */
 	public void testBaseUseDefaultFile() {
 		project.apply plugin: 'properties'
 		assertEquals("localValue", project.ext.testProperty)
 		def testFilter = project.ext.filterTokens["test.property"]
 		assertEquals("localValue", testFilter)
+		assertEquals("local", project.ext.environmentName)
 	}
 
-	// build with value, assert that we got the property from the other file
-	// and the token is right
+	/**
+	 * Build with an environment name given and make sure we got the property
+	 * from the right file, that the token is right, and that we didn't change
+	 * the environmentName
+	 */
 	public void testBaseUseAlternateFile() {
 		// simulate the -PenvironmentName=test command line option
 		project.setProperty('environmentName','test')
@@ -52,10 +65,14 @@ class PropertiesPluginTest extends GroovyTestCase {
 		assertEquals("testValue", project.ext.testProperty)
 		def testFilter = project.ext.filterTokens["test.property"]
 		assertEquals("testValue", testFilter)
+		assertEquals("test", project.ext.environmentName)
 	}
 
-	// build with no value, but override property from file and make sure
-	// the property exists, and the token is right.
+	/**
+	 * Try a build with no environment name, but we override a property in the
+	 * file with a value from the command line.  Make sure we preserve the
+	 * command line value, and we set the environmentName.
+	 */
 	public void testBaseOverrideFileValue() {
 		// Simulate defining the test property on the command line.
 		project.setProperty('testProperty','commandValue')
@@ -63,5 +80,6 @@ class PropertiesPluginTest extends GroovyTestCase {
 		assertEquals("commandValue", project.ext.testProperty)
 		def testFilter = project.ext.filterTokens["test.property"]
 		assertEquals("commandValue", testFilter)
+		assertEquals("local", project.ext.environmentName)
 	}
 }
