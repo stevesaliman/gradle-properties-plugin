@@ -72,7 +72,7 @@ compileJava.dependsOn << "prep"
 
 The reason we copy into the source resource directory instead of the build directory is to keep IDEs happy.  In general, you'll want to run the prep (or prepTest) task whenever properties or template files change, or to switch environments.
 
-# Properties added to each closure #
+# Properties added to each task #
 This plugin adds some closures to each task, which can be used to check for the presence of properties after configuration, but before any tasks are executed.
 
 **requiredProperty**
