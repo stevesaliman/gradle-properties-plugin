@@ -48,12 +48,11 @@ When the properties plugin is applied, three things happen. First, the plugin lo
 
 Next, the plugin creates a project property named "filterTokens".  The filter tokens is an array of name-value pairs that can be used when doing a filtered file copy.  There will be token for each property defined in the given properties file. The name of each token will be the name of the property from the properties file, after converting the camel case property name to dot notation. In our example, the "applicationLogDir=/opt/tomcat/logs" entry in the property file will create a token named "application.log.dir" with the value of /opt/tomcat/logs
 
-Finally, the properties plugin adds the {@code requiredProperty}
-and {@code requiredProperties} properties to every task in the build (and causes it to be added to new tasks defined later). These properties can be used in the configuration of a task define which properties must be present for that task to work.  Required properties will be checked between the Gradle configuration and execution phases.
+Finally, the properties plugin adds some property closures to every task in the build (and causes them to be added to new tasks defined later). These properties can be used in the configuration of a task define which properties must (or should) be present for that task to work.  Properties will be checked between the Gradle configuration and execution phases.
 
 **Step 4: Define prep tasks**
 
-Before the build can happen, tokenized files need to be copied to the right locations in the project.  Thisorg.apache.tools.ant.filters.ReplaceTokens, tokens: can be done with a task like the following:
+Before the build can happen, tokenized files need to be copied to the right locations in the project.  This can be done with a task like the following:
 
 ```groovy
 task prep() {
@@ -72,6 +71,23 @@ compileJava.dependsOn << "prep"
 ```
 
 The reason we copy into the source resource directory instead of the build directory is to keep IDEs happy.  In general, you'll want to run the prep (or prepTest) task whenever properties or template files change, or to switch environments.
+
+# Properties added to each closure #
+This plugin adds some closures to each task, which can be used to check for the presence of properties after configuration, but before any tasks are executed.
+
+** requiredProperty propertyName **
+This closure throws a MissingPropertyException if the named property is not defined.
+
+** requiredProperties propertyNames **
+This closure throws a MissingPropertyException if any of the named properties are not defined
+
+** recommendedProperty propertyName, defaultFile **
+This closure is handy when there are properties that have defaults somewhere else.  For example, the build file might define it, ir the application might be able to get it from a system file.  It is most useful in alerting newer developers that something must be configured somewhere on their systems.
+
+The closure checks to see if the given property is defined. If it is not, a warning message is displayed alerting the user that a default will be used, and if the defaultFile has been given, the message will include it so that the developer knows which file will be providing the default value.
+
+** recommendedProperties names: propertyNameArray, defaultFile: someDefaultText
+This closure checks all the given property names, and prints a message if we're missing any.
 
 # Acknowledgements #
 A special thank you to to Hans Dockter at Gradleware for showing me how to dynamically define the requiredProperty method and attach it to the right place in the Gradle build lifecycle.

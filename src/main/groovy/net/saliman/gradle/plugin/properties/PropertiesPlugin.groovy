@@ -20,11 +20,18 @@ import org.gradle.api.Project
  * if you have a myPropertyName property in the file, the plugin will create
  * a my.property.name filter token, whose value is the property's value.\
  * <p>
- * Finally, the properties plugin also adds the {@code requiredProperty}
- * and {@code requiredProperties} properties to every task in your build.
- * These properties can be used to define what properties must be present for
- * that task to work.  Required properties will be checked after configuration,
- * is complete, but before any tasks are executed.
+ * Finally, the properties plugin also adds some properties to every task in
+ * your build:
+ * <p>{@code requiredProperty} and {@code requiredProperties} can be used to
+ * define what properties must be present for that task to work.  Required
+ * properties will be checked after configuration, is complete, but before any
+ * tasks are executed.
+ * <p>
+ * {@code recommendedProperty} and {@code recommendedProperties} can be used
+ * to define properties that the task can work without, but it (or the deployed
+ * application) will use a default value for the property.  The value of this
+ * property is that we can prompt new developers to either provide a property,
+ * or make sure default config files are set up correctly.
  * <p>
  * Special thanks to Hans Dockter at Gradleware for showing me how to attach
  * to the right place in the Gradle build lifecycle.
@@ -94,6 +101,28 @@ class PropertiesPlugin implements Plugin<Project> {
 					}
 				}
 			}
+
+			// add the recommendedProperty property
+			task.ext.recommendedProperty = { String propertyName, String defaultFile=null ->
+				project.gradle.taskGraph.whenReady { graph ->
+					if (graph.hasTask(task.path)) {
+						checkRecommendedProperty(project, propertyName, defaultFile)
+					}
+				}
+			}
+
+			// now add the one that takes a list...
+			task.ext.recommendedProperties = { hash ->
+				project.gradle.taskGraph.whenReady { graph ->
+					if (graph.hasTask(task.path)) {
+						def propertyNames = hash['names']
+						def defaultFile = hash['defaultFile']
+						for ( propertyName in propertyNames ) {
+							checkRecommendedProperty(project, propertyName, defaultFile)
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -107,6 +136,16 @@ class PropertiesPlugin implements Plugin<Project> {
 	def checkProperty(project, propertyName) {
 		if ( !project.hasProperty(propertyName) ) {
 			throw new MissingPropertyException("You must set the '${propertyName}' property")
+		}
+	}
+
+	def checkRecommendedProperty(project, propertyName, defaultFile) {
+		if ( !project.hasProperty(propertyName) ) {
+			def message = "WARNING: ${propertyName} has no value, using default"
+			if ( defaultFile != null ) {
+				message = message + " from ${defaultFile}"
+			}
+			println message
 		}
 	}
 
