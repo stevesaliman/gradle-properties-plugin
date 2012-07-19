@@ -78,7 +78,7 @@ This plugin adds some closures to each task, which can be used to check for the 
 **requiredProperty**
 
  ```groovy
- requiredProperty "somePropertyName
+ requiredProperty "somePropertyName"
  ```
 This closure throws a MissingPropertyException if the named property is not defined.
 
@@ -90,7 +90,7 @@ requiredProperties "property1", "property2", ...
 
 This closure throws a MissingPropertyException if any of the named properties are not defined
 
-**recommendedProperty
+**recommendedProperty**
 
 ```groovy
 recommendedProperty "somePropertyName", "default File Text"
