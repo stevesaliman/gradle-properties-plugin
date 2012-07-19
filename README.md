@@ -75,18 +75,18 @@ The reason we copy into the source resource directory instead of the build direc
 # Properties added to each closure #
 This plugin adds some closures to each task, which can be used to check for the presence of properties after configuration, but before any tasks are executed.
 
-** requiredProperty propertyName **
+**requiredProperty propertyName**
 This closure throws a MissingPropertyException if the named property is not defined.
 
-** requiredProperties propertyNames **
+**requiredProperties propertyNames**
 This closure throws a MissingPropertyException if any of the named properties are not defined
 
-** recommendedProperty propertyName, defaultFile **
+**recommendedProperty propertyName, defaultFile**
 This closure is handy when there are properties that have defaults somewhere else.  For example, the build file might define it, ir the application might be able to get it from a system file.  It is most useful in alerting newer developers that something must be configured somewhere on their systems.
 
 The closure checks to see if the given property is defined. If it is not, a warning message is displayed alerting the user that a default will be used, and if the defaultFile has been given, the message will include it so that the developer knows which file will be providing the default value.
 
-** recommendedProperties names: propertyNameArray, defaultFile: someDefaultText
+**recommendedProperties names: propertyNameArray, defaultFile: someDefaultText**
 This closure checks all the given property names, and prints a message if we're missing any.
 
 # Acknowledgements #
