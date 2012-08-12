@@ -1,9 +1,51 @@
-NOTES:
-properties defined in build.gradle before applying the file will win - same as properties set after
-changing home dir doesn't work (yet)
-only properties in files and command line in tokens.  Set it in build.gradle, need to add to properties manually.
-
 # Gradle Properties Plugin #
+The Properties plugin is a useful plugin that changes the way Gradle loads
+properties from the various properties files.
+
+By default, Gradle applies properties to your project in a particular order.
+The last thing to define a property wins.  Gradle's order of processing is:
+
+1. The gradle.properties file in the project directory
+
+2. The gradle.properties file in the user's ${gradleUserHomeDir}/.gradle
+directory.
+
+3. The command line properties set with -P arguments.
+
+The properties plugin enhances this sequence by adding two additional steps.
+One for project properties that change from environment to environment, and one
+for properties that are common to a user (or client), but change from user to
+user (or client to client).  The order of execution for the properties plugin
+is:
+
+1. The gradle.properties file in the project directory
+
+2. The gradle-${environmentName}.properties file in the project directory.
+if no environment is specified, the plugin will assume an environment name of
+"local".  We strongly recommend adding gradle-local.properties to the .gitignore
+file of the project so that develpers' local configurations don't interfere
+with each other.
+
+3. The gradle.properties file in the user's ${gradleUserHomeDir}/.gradle
+directory. Properties in this file are generally things that span projects, or
+shouldn't be checked into a repository, such as user credentials, etc.
+
+4. If the ${gradleUserName} property is set, the properties plugin will load
+properties from ${gradleUserHomeDir}/gradle-${gradleUserName}.properties.  This
+file is useful for cases when you need to build for a different user or client
+and you have properties that span projects.  For example you might have several
+projects that have pages with a customized banner.  The contents of the banner
+change from client to client.  The gradle-${gradleUserName}.properties file
+is a great way to put the client's custom text into a single file per client,
+and specify at build time which client's banners should be used.
+
+5. The command line properties set with -P arguments.
+
+As with standard Gradle property processing, the last one in wins. The
+properties plugin also creates a "filterTokens" property that can be used to
+do token replacement in files, allowing Gradle to edit configuration files
+for you.
+
 The Properties plugin is designed to make it easier to work with properties that
 change from environment to environment, or client to client. It makes life
 easier for developers who are new to a project to configure and build a
@@ -34,50 +76,6 @@ This provides an added benefit; new developers see some of the things that
 need to be setup external to the project.  For example, if the project mentions
 a tomcat home, the developer knows they need to install tomcat.  If they see a
 JNDI data source, they know they need to set one up inside their container.
-
-# How does it work? #
-By default, Gradle applies properties to your project in the following order:
-
-1. The gradle.properties file in the project directory
-
-2. The gradle.properties file in the user's ${gradleUserHomeDir}/.gradle
-directory.
-
-3. The command line properties set with -P arguments.
-
-The last one in wins.  The properties plugin enhances this sequence by adding
-two additional steps.  One for project properties that change from environment
-to environment, and one for properties that are common to a user (or client),
-but change from user to user (or client to client).  The order of execution
-for the properties plugin is:
-
-1. The gradle.properties file in the project directory
-
-2. The gradle-${environmentName}.properties file in the project directory.
-if no environment is specified, the plugin will assume an environment name of
-"local".  We strongly recommend adding gradle-local.properties to the .gitignore
-file of the project so that develpers' local configurations don't interfere
-with each other.
-
-3. The gradle.properties file in the user's ${gradleUserHomeDir}/.gradle
-directory. Properties in this file are generally things that span projects, or
-shouldn't be checked into a repository, such as user credentials, etc.
-
-4. If the ${gradleUserName} property is set, the properties plugin will load
-properties from ${gradleUserHomeDir}/gradle-${gradleUserName}.properties.  This
-file is useful for cases when you need to build for a different user or client
-and you have properties that span projects.  For example you might have several
-projects that have pages with a customized banner.  The contents of the banner
-change from client to client.  The gradle-${gradleUserName}.properties file
-is a great way to put the client's custom text into a single file per client,
-and specify at build time which client's banners should be used.
-
-5. The command line properties set with -P arguments.
-
-As with standard Gradle property processing, the last one in wins. The
-properties plugin also creates a "filterTokens" property that can be used to
-do token replacement in files, allowing Gradle to edit configuration files
-for you.
 
 # How do I use it? #
 The initial setup of a project is a little involved, but once done, this process
@@ -206,6 +204,19 @@ recommendedProperties names: ["property1", "property2", ...], defaultFile: "defa
 ```
 
 This closure checks all the given property names, and prints a message if we're missing any.
+
+# Notes #
+If a property is set in the build.gradle file before the properties plugin is
+applied, and it happens to match a property in one of the 5 standard locations
+defined earlier, the build.gradle property's value will be overwritten.  If
+you need to set a property in build.gradle, it is best to do it after the
+properties plugin is defined.  Keep in mind that properties set in the
+build.gradle file will not be in the filterTokens.
+
+There are a few ways to change the Gradle user home directory.  The properties
+plugin uses a gradle property to use a different user home directory.  The
+properties plugin uses the same property, but I haven't done much testing of
+that yet.
 
 # Acknowledgements #
 A special thank you to to Hans Dockter at Gradleware for showing me how to
