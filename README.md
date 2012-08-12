@@ -1,5 +1,12 @@
+NOTES:
+properties defined in build.gradle before applying the file will win - same as properties set after
+changing home dir doesn't work (yet)
+only properties in files and command line in tokens.  Set it in build.gradle, need to add to properties manually.
+
 # Gradle Properties Plugin #
-The Properties plugin is designed to make it easier to work with properties that change from environment to environment. It is intended to make life easier for developers who are new to a project to configure and build a project.  It it also intended to make it easier for experienced developers to create different configurations for different scenarios on their boxes.
+The Properties plugin is designed to make it easier to work with properties that
+change from environment to environment. It is intended to make life easier for
+developers who are new to a project to configure and build a project.  It it also intended to make it easier for experienced developers to create different configurations for different scenarios on their boxes.
 
 # Why should I use it? #
 One of the challenges to building a project is that it often contains things that should be changed from environment to environment. This includes things like the log file directory, or the JNDI data source name.  The values of these properties are often complicated by platform differences between the OSX and Windows environments most developers use and the Unix environments used for deployments.  It gets even messier when you consider that these values are often scattered amongst several files buried in the project.

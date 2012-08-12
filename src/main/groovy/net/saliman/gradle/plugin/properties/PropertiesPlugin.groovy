@@ -5,20 +5,38 @@ import org.gradle.api.Project
 
 /**
  * This is the main class for the properties plugin. When the properties
- * plugin is applied, three things happen.
- * First, the plugin looks for a gradle-<b>environmentName</b>.properties
- * file in the root directory of the project containing properties for the
- * project.  If no environmentName is given, &quot;local&quot; will be used.
- * Properties already defined on the command line with the -P option will be
- * will not be overwritten by properties in the file.
+ * plugin is applied, it reloads all the project properties in the following
+ * order:<br>
+ * <ol>
+ * <li>
+ * gradle.properties in the project directory
+ * </li>
+ * <li>
+ * gradle-${environmentName}.properties in the project directory.  If no
+ * environment name is specified, the default is "local".
+ * </li>
+ * <li>
+ * gradle.properties in the user's ${home}/.gradle directory.
+ * </li>
+ * <li>
+ * gradle-${gradleUserName}.properties in the user's ${home}/.gradle directory.
+ * </li>
+ * <li>
+ * properties defined on the command line with the -P option.
+ * </li>
+ * </ol>
+ * The last thing to set a property wins.  All files are optional unless an
+ * environment or user is specified, in which case the file belonging to the
+ * specified environment or user must exist.
  * <p>
- * Next, the plugin also creates filterTokens property containing an array
- * of tokens that can be used when doing a filtered file copy.  There will be
- * a token for each property defined in the given properties file. The name
- * of each token will be the name of the property from the properties file,
- * after converting the camel case property name to dot notation. For example,
- * if you have a myPropertyName property in the file, the plugin will create
- * a my.property.name filter token, whose value is the property's value.\
+ * As properties are set, they are also placed in a filterTokens property.
+ * the filterTokens property is a map of tokens that can be used when doing a
+ * filtered file copy.  There will be a token for each property defined by one
+ * of the 5 listed methods.  The name of each token will be the name of the
+ * property from the properties file, after converting the camel case property
+ * name to dot notation. For example, if you have a myPropertyName property in
+ * the file, the plugin will create a my.property.name filter token, whose
+ * value is the property's value.
  * <p>
  * Finally, the properties plugin also adds some properties to every task in
  * your build:
@@ -45,31 +63,23 @@ class PropertiesPlugin implements Plugin<Project> {
 	 * with.
 	 */
 	void apply(Project project) {
+		def userHome = project.getGradle().getGradleUserHomeDir();
+		// If the user hasn't set an environment, assume "local"
 		if ( !project.hasProperty('environmentName' ) ){
 			project.ext.setProperty('environmentName', 'local')
 		}
+		project.ext.filterTokens = [:]
 
-		// Load the environment file
-		def filename = "gradle-${project.ext.environmentName}.properties"
-		def propertyCount = 0
-		def tokenCount = 0
-		project.file("${filename}").withReader {reader ->
-			def userProps= new Properties()
-			project.ext.filterTokens = [:]
-			userProps.load(reader)
-			userProps.each { String key, String value ->
-				if ( !project.hasProperty(key) ) {
-					project.ext.setProperty(key, value)
-					propertyCount++
-				} else {
-					println "PropertiesPlugin:apply ${key} was defined on the command line"
-				}
-				def token = propertyToToken(key)
-				project.ext.filterTokens[token] = project.getProperties()[key]
-				tokenCount++
-			}
-			println "PropertiesPlugin:apply Loaded ${propertyCount} properties from ${filename} and created ${tokenCount} tokens"
+		// process files in reverse order.  Last one in wins.
+		processFile("gradle.properties", project, false)
+		processFile("gradle-${project.ext.environmentName}.properties", project, project.ext.environmentName != "local")
+		processFile("${userHome}/gradle.properties", project, false)
+		// The user properties file is optional
+		if ( project.hasProperty('gradleUserName') ) {
+			processFile("${userHome}/gradle-${project.ext.gradleUserName}.properties", project, true)
+
 		}
+		processCommandProperties(project)
 
 		// "all" executes the closure against all tasks in the project, and any
 		// new tasks added in the future.  This closure defines a requireProperty
@@ -139,6 +149,14 @@ class PropertiesPlugin implements Plugin<Project> {
 		}
 	}
 
+	/**
+	 * Gelper method to check a recommended property and print a warning if it is
+	 * missing.
+	 * @param project the project we're dealing with
+	 * @param propertyName the name of the property we want to check
+	 * @param defaultFile an optional description of where the project will get
+	 *        the value if it isn't specified during the build.
+	 */
 	def checkRecommendedProperty(project, propertyName, defaultFile) {
 		if ( !project.hasProperty(propertyName) ) {
 			def message = "WARNING: ${propertyName} has no value, using default"
@@ -167,5 +185,46 @@ class PropertiesPlugin implements Plugin<Project> {
 			}
 		}
 		return sb.toString()
+	}
+
+	/**
+	 * Process a file, loading properties from it, and adding tokens.
+	 * @param filename the name of the file to process
+	 * @param project the enclosing project.
+	 * @param required whether or not processing this file is required.  Required
+	 *        files that are missing will cause an error.
+	 */
+	def processFile(String filename, Project project, Boolean required) {
+		def loaded = 0
+		def propFile = project.file(filename)
+		if ( propFile.exists() || required ) {
+			project.file("${filename}").withReader {reader ->
+				def userProps= new Properties()
+				userProps.load(reader)
+				userProps.each { String key, String value ->
+					project.ext.setProperty(key, value)
+					def token = propertyToToken(key)
+					project.ext.filterTokens[token] = value
+					loaded++
+				}
+			}
+			println "PropertiesPlugin:apply Loaded ${loaded} properties from ${filename}"
+		}
+	}
+
+	/**
+	 * Process the command line properties, setting properties and adding tokens.
+	 * @param project the enclosing project.
+	 */
+	def processCommandProperties(project) {
+		def loaded = 0
+		def commandProperties = project.gradle.startParameter.projectProperties
+		commandProperties.each { key, value ->
+			project.setProperty(key, value)
+			def token = propertyToToken(key)
+			project.ext.filterTokens[token] = project.getProperties()[key]
+			loaded++
+		}
+		println "PropertiesPlugin:apply Loaded ${loaded} properties from the command line"
 	}
 }

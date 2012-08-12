@@ -1,5 +1,5 @@
 # Gradle.properties has GPG info, and we don't want that checked in.
-gradle.properties
+/gradle.properties
 
 # ignore Idea artifacts
 /.idea/
