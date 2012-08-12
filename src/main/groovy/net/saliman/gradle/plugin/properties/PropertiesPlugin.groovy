@@ -208,7 +208,7 @@ class PropertiesPlugin implements Plugin<Project> {
 					loaded++
 				}
 			}
-			println "PropertiesPlugin:apply Loaded ${loaded} properties from ${filename}"
+			project.logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from ${filename}")
 		}
 	}
 
@@ -225,6 +225,6 @@ class PropertiesPlugin implements Plugin<Project> {
 			project.ext.filterTokens[token] = project.getProperties()[key]
 			loaded++
 		}
-		println "PropertiesPlugin:apply Loaded ${loaded} properties from the command line"
+		project.logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from the command line")
 	}
 }

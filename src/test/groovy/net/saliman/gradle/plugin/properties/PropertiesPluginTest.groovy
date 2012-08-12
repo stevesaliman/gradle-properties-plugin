@@ -61,12 +61,12 @@ class PropertiesPluginTest extends GroovyTestCase {
 		// in the values below.
 		def commandProps = project.gradle.startParameter.projectProperties
 		commandProps.commandProperty = "commandValue"
-		project.setProperty("userProperty", "homeUserValue")
-		project.setProperty("homeProperty", "homeValue")
-		project.setProperty("environmentProperty", "projectEnvironmentValue")
-		project.setProperty("projectProperty", "projectValue")
+		project.ext.setProperty("userProperty", "homeUserValue")
+		project.ext.setProperty("homeProperty", "homeValue")
+		project.ext.setProperty("environmentProperty", "projectEnvironmentValue")
+		project.ext.setProperty("projectProperty", "projectValue")
 
-		project.setProperty("gradleUserName", "user")
+		project.ext.setProperty("gradleUserName", "user")
 		project.apply plugin: 'properties'
 		assertEquals("commandValue", project.ext.commandProperty)
 		def testFilter = project.ext.filterTokens["command.property"]
@@ -85,12 +85,12 @@ class PropertiesPluginTest extends GroovyTestCase {
 		// in the values below.
 		def commandProps = project.gradle.startParameter.projectProperties
 		commandProps.commandProperty = "commandValue"
-		project.setProperty("userProperty", "homeUserValue")
-		project.setProperty("homeProperty", "homeValue")
-		project.setProperty("environmentProperty", "projectEnvironmentValue")
-		project.setProperty("projectProperty", "projectValue")
+		project.ext.setProperty("userProperty", "homeUserValue")
+		project.ext.setProperty("homeProperty", "homeValue")
+		project.ext.setProperty("environmentProperty", "projectEnvironmentValue")
+		project.ext.setProperty("projectProperty", "projectValue")
 
-		project.setProperty("gradleUserName", "user")
+		project.ext.setProperty("gradleUserName", "user")
 		project.apply plugin: 'properties'
 		assertEquals("userValue", project.ext.userProperty)
 		def testFilter = project.ext.filterTokens["user.property"]
@@ -109,10 +109,10 @@ class PropertiesPluginTest extends GroovyTestCase {
 		// in the values below.
 		def commandProps = project.gradle.startParameter.projectProperties
 		commandProps.commandProperty = "commandValue"
-		project.setProperty("userProperty", "homeUserValue")
-		project.setProperty("homeProperty", "homeValue")
-		project.setProperty("environmentProperty", "projectEnvironmentValue")
-		project.setProperty("projectProperty", "projectValue")
+		project.ext.setProperty("userProperty", "homeUserValue")
+		project.ext.setProperty("homeProperty", "homeValue")
+		project.ext.setProperty("environmentProperty", "projectEnvironmentValue")
+		project.ext.setProperty("projectProperty", "projectValue")
 
 		project.apply plugin: 'properties'
 		assertEquals("homeUserValue", project.ext.userProperty)
@@ -132,12 +132,12 @@ class PropertiesPluginTest extends GroovyTestCase {
 		// in the values below.
 		def commandProps = project.gradle.startParameter.projectProperties
 		commandProps.commandProperty = "commandValue"
-		project.setProperty("userProperty", "homeUserValue")
-		project.setProperty("homeProperty", "homeValue")
-		project.setProperty("environmentProperty", "projectEnvironmentValue")
-		project.setProperty("projectProperty", "projectValue")
+		project.ext.setProperty("userProperty", "homeUserValue")
+		project.ext.setProperty("homeProperty", "homeValue")
+		project.ext.setProperty("environmentProperty", "projectEnvironmentValue")
+		project.ext.setProperty("projectProperty", "projectValue")
 
-		project.setProperty("gradleUserName", "user")
+		project.ext.setProperty("gradleUserName", "user")
 		project.apply plugin: 'properties'
 		assertEquals("homeValue", project.ext.homeProperty)
 		def testFilter = project.ext.filterTokens["home.property"]
@@ -156,12 +156,12 @@ class PropertiesPluginTest extends GroovyTestCase {
 		// in the values below.
 		def commandProps = project.gradle.startParameter.projectProperties
 		commandProps.commandProperty = "commandValue"
-		project.setProperty("userProperty", "homeUserValue")
-		project.setProperty("homeProperty", "homeValue")
-		project.setProperty("environmentProperty", "projectEnvironmentValue")
-		project.setProperty("projectProperty", "projectValue")
+		project.ext.setProperty("userProperty", "homeUserValue")
+		project.ext.setProperty("homeProperty", "homeValue")
+		project.ext.setProperty("environmentProperty", "projectEnvironmentValue")
+		project.ext.setProperty("projectProperty", "projectValue")
 
-		project.setProperty("gradleUserName", "user")
+		project.ext.setProperty("gradleUserName", "user")
 		project.apply plugin: 'properties'
 		assertEquals("localEnvironmentValue", project.ext.environmentProperty)
 		def testFilter = project.ext.filterTokens["environment.property"]
@@ -180,14 +180,14 @@ class PropertiesPluginTest extends GroovyTestCase {
 		// in the values below.
 		def commandProps = project.gradle.startParameter.projectProperties
 		commandProps.commandProperty = "commandValue"
-		project.setProperty("userProperty", "homeUserValue")
-		project.setProperty("homeProperty", "homeValue")
-		project.setProperty("environmentProperty", "projectEnvironmentValue")
-		project.setProperty("projectProperty", "projectValue")
+		project.ext.setProperty("userProperty", "homeUserValue")
+		project.ext.setProperty("homeProperty", "homeValue")
+		project.ext.setProperty("environmentProperty", "projectEnvironmentValue")
+		project.ext.setProperty("projectProperty", "projectValue")
 
 		// simulate the -PenvironmentName=test command line option
-		project.setProperty("gradleUserName", "user")
-		project.setProperty('environmentName','test')
+		project.ext.setProperty("gradleUserName", "user")
+		project.ext.setProperty('environmentName','test')
 		project.apply plugin: 'properties'
 		assertEquals("testEnvironmentValue", project.ext.environmentProperty)
 		def testFilter = project.ext.filterTokens["environment.property"]
@@ -206,12 +206,12 @@ class PropertiesPluginTest extends GroovyTestCase {
 		// in the values below.
 		def commandProps = project.gradle.startParameter.projectProperties
 		commandProps.commandProperty = "commandValue"
-		project.setProperty("userProperty", "homeUserValue")
-		project.setProperty("homeProperty", "homeValue")
-		project.setProperty("environmentProperty", "projectEnvironmentValue")
-		project.setProperty("projectProperty", "projectValue")
+		project.ext.setProperty("userProperty", "homeUserValue")
+		project.ext.setProperty("homeProperty", "homeValue")
+		project.ext.setProperty("environmentProperty", "projectEnvironmentValue")
+		project.ext.setProperty("projectProperty", "projectValue")
 
-		project.setProperty("gradleUserName", "user")
+		project.ext.setProperty("gradleUserName", "user")
 		project.apply plugin: 'properties'
 		assertEquals("projectValue", project.ext.projectProperty)
 		def testFilter = project.ext.filterTokens["project.property"]
@@ -233,10 +233,10 @@ class PropertiesPluginTest extends GroovyTestCase {
 		// in the values below.
 		def commandProps = project.gradle.startParameter.projectProperties
 		commandProps.commandProperty = "commandValue"
-		project.setProperty("userProperty", "homeUserValue")
-		project.setProperty("homeProperty", "homeValue")
-		project.setProperty("environmentProperty", "projectEnvironmentValue")
-		project.setProperty("projectProperty", "projectValue")
+		project.ext.setProperty("userProperty", "homeUserValue")
+		project.ext.setProperty("homeProperty", "homeValue")
+		project.ext.setProperty("environmentProperty", "projectEnvironmentValue")
+		project.ext.setProperty("projectProperty", "projectValue")
 
 		def propFile = new File("${project.gradle.gradleUserHomeDir}/gradle-user.properties")
 		propFile.delete()
@@ -267,12 +267,12 @@ class PropertiesPluginTest extends GroovyTestCase {
 		// in the values below.
 		def commandProps = project.gradle.startParameter.projectProperties
 		commandProps.commandProperty = "commandValue"
-		project.setProperty("userProperty", "homeUserValue")
-		project.setProperty("homeProperty", "homeValue")
-		project.setProperty("environmentProperty", "projectEnvironmentValue")
-		project.setProperty("projectProperty", "projectValue")
+		project.ext.setProperty("userProperty", "homeUserValue")
+		project.ext.setProperty("homeProperty", "homeValue")
+		project.ext.setProperty("environmentProperty", "projectEnvironmentValue")
+		project.ext.setProperty("projectProperty", "projectValue")
 
-		project.setProperty("gradleUserName", "dummy")
+		project.ext.setProperty("gradleUserName", "dummy")
 		try {
 			project.apply plugin: 'properties'
 			fail("We should have gotten an error when we're missing a user file.")
@@ -292,13 +292,13 @@ class PropertiesPluginTest extends GroovyTestCase {
 		// in the values below.
 		def commandProps = project.gradle.startParameter.projectProperties
 		commandProps.commandProperty = "commandValue"
-		project.setProperty("userProperty", "homeUserValue")
-		project.setProperty("projectHomeProperty", "homeValue")
-		project.setProperty("environmentProperty", "projectEnvironmentValue")
-		project.setProperty("projectProperty", "projectValue")
+		project.ext.setProperty("userProperty", "homeUserValue")
+		project.ext.setProperty("projectHomeProperty", "homeValue")
+		project.ext.setProperty("environmentProperty", "projectEnvironmentValue")
+		project.ext.setProperty("projectProperty", "projectValue")
 
 		// Unset the home property setUp set.
-		project.setProperty("gradleUserName", "user")
+		project.ext.setProperty("gradleUserName", "user")
 		def propFile = new File("${project.gradle.gradleUserHomeDir}/gradle.properties")
 		propFile.delete()
 		assertFalse("Failed to delete home file", propFile.exists())
@@ -327,12 +327,12 @@ class PropertiesPluginTest extends GroovyTestCase {
 		// in the values below.
 		def commandProps = project.gradle.startParameter.projectProperties
 		commandProps.commandProperty = "commandValue"
-		project.setProperty("userProperty", "homeUserValue")
-		project.setProperty("homeProperty", "homeValue")
-		project.setProperty("environmentProperty", "projectEnvironmentValue")
-		project.setProperty("projectProperty", "projectValue")
+		project.ext.setProperty("userProperty", "homeUserValue")
+		project.ext.setProperty("homeProperty", "homeValue")
+		project.ext.setProperty("environmentProperty", "projectEnvironmentValue")
+		project.ext.setProperty("projectProperty", "projectValue")
 
-		project.setProperty("gradleUserName", "user")
+		project.ext.setProperty("gradleUserName", "user")
 		def propFile = new File("${project.projectDir}/gradle-local.properties")
 		propFile.delete()
 		assertFalse("Failed to delete local file", propFile.exists())
@@ -361,12 +361,12 @@ class PropertiesPluginTest extends GroovyTestCase {
 		// in the values below.
 		def commandProps = project.gradle.startParameter.projectProperties
 		commandProps.commandProperty = "commandValue"
-		project.setProperty("userProperty", "homeUserValue")
-		project.setProperty("homeProperty", "homeValue")
-		project.setProperty("environmentProperty", "projectEnvironmentValue")
-		project.setProperty("projectProperty", "projectValue")
+		project.ext.setProperty("userProperty", "homeUserValue")
+		project.ext.setProperty("homeProperty", "homeValue")
+		project.ext.setProperty("environmentProperty", "projectEnvironmentValue")
+		project.ext.setProperty("projectProperty", "projectValue")
 
-		project.setProperty("gradleUserName", "user")
+		project.ext.setProperty("gradleUserName", "user")
 		project.ext.environmentName = "dummy"
 		try {
 			project.apply plugin: 'properties'
@@ -386,13 +386,13 @@ class PropertiesPluginTest extends GroovyTestCase {
 		// in the values below.
 		def commandProps = project.gradle.startParameter.projectProperties
 		commandProps.commandProperty = "commandValue"
-		project.setProperty("userProperty", "homeUserValue")
-		project.setProperty("homeProperty", "homeValue")
-		project.setProperty("environmentProperty", "projectEnvironmentValue")
+		project.ext.setProperty("userProperty", "homeUserValue")
+		project.ext.setProperty("homeProperty", "homeValue")
+		project.ext.setProperty("environmentProperty", "projectEnvironmentValue")
 
 		// Unset the project property setUp set.
 		project.properties.remove('projectProperty')
-		project.setProperty("gradleUserName", "user")
+		project.ext.setProperty("gradleUserName", "user")
 		def propFile = new File("${project.projectDir}/gradle.properties")
 		propFile.delete()
 		assertFalse("Failed to delete project file", propFile.exists())
