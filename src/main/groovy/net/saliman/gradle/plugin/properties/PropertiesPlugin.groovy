@@ -66,17 +66,17 @@ class PropertiesPlugin implements Plugin<Project> {
 		def userHome = project.getGradle().getGradleUserHomeDir();
 		// If the user hasn't set an environment, assume "local"
 		if ( !project.hasProperty('environmentName' ) ){
-			project.ext.setProperty('environmentName', 'local')
+			project.ext.environmentName = 'local'
 		}
 		project.ext.filterTokens = [:]
 
 		// process files in reverse order.  Last one in wins.
 		processFile("gradle.properties", project, false)
-		processFile("gradle-${project.ext.environmentName}.properties", project, project.ext.environmentName != "local")
+		processFile("gradle-${project.environmentName}.properties", project, project.environmentName != "local")
 		processFile("${userHome}/gradle.properties", project, false)
 		// The user properties file is optional
 		if ( project.hasProperty('gradleUserName') ) {
-			processFile("${userHome}/gradle-${project.ext.gradleUserName}.properties", project, true)
+			processFile("${userHome}/gradle-${project.gradleUserName}.properties", project, true)
 
 		}
 		processCommandProperties(project)
@@ -202,7 +202,7 @@ class PropertiesPlugin implements Plugin<Project> {
 				def userProps= new Properties()
 				userProps.load(reader)
 				userProps.each { String key, String value ->
-					project.ext.setProperty(key, value)
+					project.ext.set(key, value)
 					def token = propertyToToken(key)
 					project.ext.filterTokens[token] = value
 					loaded++
@@ -220,7 +220,7 @@ class PropertiesPlugin implements Plugin<Project> {
 		def loaded = 0
 		def commandProperties = project.gradle.startParameter.projectProperties
 		commandProperties.each { key, value ->
-			project.setProperty(key, value)
+			project.ext.set(key, value)
 			def token = propertyToToken(key)
 			project.ext.filterTokens[token] = project.getProperties()[key]
 			loaded++
