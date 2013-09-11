@@ -32,7 +32,7 @@ repositories {
 }
 
 dependencies {
-	groovy localGroovy()
+	compile localGroovy()
 	compile gradleApi()
 	archives "org.apache.maven.wagon:wagon-ssh:2.2"
 	archives "org.apache.maven.wagon:wagon-ssh-external:2.2"
