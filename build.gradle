@@ -54,11 +54,6 @@ artifacts {
     archives jar, groovydocJar, sourceJar
 }
 
-task wrapper(type: Wrapper) {
-	gradleVersion = '1.0'
-}
-
-
 signing {
 	sign configurations.archives
 }
