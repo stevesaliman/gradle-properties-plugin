@@ -5,32 +5,45 @@ properties from the various properties files.
 By default, Gradle applies properties to your project in a particular order.
 The last thing to define a property wins.  Gradle's order of processing is:
 
-1. The gradle.properties file in the project directory
+1. The gradle.properties file in the parent project's directory, if the project
+is a module of a multi-project build.
 
-2. The gradle.properties file in the user's ${gradleUserHomeDir}/.gradle
+2. The gradle.properties file in the project directory
+
+3. The gradle.properties file in the user's ${gradleUserHomeDir}/.gradle
 directory.
 
-3. The command line properties set with -P arguments.
+4. The command line properties set with -P arguments.
 
-The properties plugin enhances this sequence by adding two additional steps.
-One for project properties that change from environment to environment, and one
-for properties that are common to a user (or client), but change from user to
-user (or client to client).  The order of execution for the properties plugin
-is:
+The properties plugin enhances this sequence by adding two additional types of
+property files. One for project properties that change from environment to
+environment, and one for properties that are common to a user (or client), but
+change from user to user (or client to client).  The order of execution for the
+properties plugin is:
 
-1. The gradle.properties file in the project directory
+1. The gradle.properties file in the parent project's directory, if the project
+is a module of a multi-project build.
 
-2. The gradle-${environmentName}.properties file in the project directory.
+2. The gradle-${environmentName}.properties file in the parent project's
+directory, if the project is a module of a multi-project build. if no
+environment is specified, the plugin will assume an environment name of "local".
+We strongly recommend adding gradle-local.properties to the .gitignore file of
+the project so that developers' local configurations don't interfere with each
+other.
+
+3. The gradle.properties file in the project directory
+
+4. The gradle-${environmentName}.properties file in the project directory.
 if no environment is specified, the plugin will assume an environment name of
 "local".  We strongly recommend adding gradle-local.properties to the .gitignore
 file of the project so that develpers' local configurations don't interfere
 with each other.
 
-3. The gradle.properties file in the user's ${gradleUserHomeDir}/.gradle
+5. The gradle.properties file in the user's ${gradleUserHomeDir}/.gradle
 directory. Properties in this file are generally things that span projects, or
 shouldn't be checked into a repository, such as user credentials, etc.
 
-4. If the ${gradleUserName} property is set, the properties plugin will load
+6. If the ${gradleUserName} property is set, the properties plugin will load
 properties from ${gradleUserHomeDir}/gradle-${gradleUserName}.properties.  This
 file is useful for cases when you need to build for a different user or client
 and you have properties that span projects.  For example you might have several
@@ -39,7 +52,13 @@ change from client to client.  The gradle-${gradleUserName}.properties file
 is a great way to put the client's custom text into a single file per client,
 and specify at build time which client's banners should be used.
 
-5. The command line properties set with -P arguments.
+7. The command line properties set with -P arguments.
+
+If the project was three levels deep in a project hierarchy, The steps 1 and 2
+would apply to the root project, then the plugin would check the files in the
+parent project before continuing on with steps 3 and 4.  More formally, the
+plugin applies project and environment files, when found, from the root project
+down to the plugin that applies the plugin.
 
 As with standard Gradle property processing, the last one in wins. The
 properties plugin also creates a "filterTokens" property that can be used to
@@ -125,6 +144,16 @@ buildscript {
 // invoke the plugin
 apply plugin: 'properties'
 ```
+
+Note that this only applies the plugin to the current project.  To apply the
+plugin to all projects in a multi-project build, use the following instead of
+```apply plugin: properties'```:
+```groovy
+allprojects {
+  apply plugin: 'properties'
+}
+```
+
 When the properties plugin is applied, three things happen. First, the plugin
 processes the various property files as described above.
 
@@ -217,6 +246,10 @@ There are a few ways to change the Gradle user home directory.  The properties
 plugin uses a gradle property to use a different user home directory.  The
 properties plugin uses the same property, but I haven't done much testing of
 that yet.
+
+It is not required to have a gradle-local.properties file, but if you specify
+an environment with the ```-PenvironmentName=x``` flag, the environment file
+for that environment must exist at least once in the project hierarchy.
 
 # Acknowledgements #
 A special thank you to to Hans Dockter at Gradleware for showing me how to

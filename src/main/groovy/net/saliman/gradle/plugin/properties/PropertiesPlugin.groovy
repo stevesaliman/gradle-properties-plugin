@@ -63,24 +63,119 @@ class PropertiesPlugin implements Plugin<Project> {
 	 * with.
 	 */
 	void apply(Project project) {
-		def userHome = project.getGradle().getGradleUserHomeDir();
 		// If the user hasn't set an environment, assume "local"
-		if ( !project.hasProperty('environmentName' ) ){
+		if ( !project.hasProperty('environmentName' ) ) {
 			project.ext.environmentName = 'local'
 		}
 		project.ext.filterTokens = [:]
 
-		// process files in reverse order.  Last one in wins.
-		processFile("gradle.properties", project, false)
-		processFile("gradle-${project.environmentName}.properties", project, project.environmentName != "local")
-		processFile("${userHome}/gradle.properties", project, false)
+		// process files from least significant to most significant. With gradle
+		// properties, Last one in wins.
+		def foundEnvFile = false
+		def propertyFiles = buildPropertyFileList(project)
+		propertyFiles.each { PropertyFile file ->
+			def success = processPropertyFile(project, file)
+			// Fail right away if we're missing a required file.
+			if ( file.fileType == FileType.REQUIRED && !success ) {
+				throw new FileNotFoundException("could not process required file ${file.filename} ")
+			}
+
+			// If we found an environment file, make note of it.
+			if ( file.fileType == FileType.ENVIRONMENT && success ) {
+				foundEnvFile = true;
+			}
+		}
+
+		processCommandProperties(project)
+		// Make sure we got at least one environment file if we are not in the local environment.
+		if ( project.environmentName != "local" && !foundEnvFile ) {
+			throw new FileNotFoundException("No environment files were found for the '${project.environmentName}' environment")
+		}
+
+		// Register a task listener that adds the property checking helper methods.
+		registerTaskListener(project)
+	}
+
+	/**
+	 * Build a list of property files to process, in the order in which they
+	 * need to be processed.
+	 * @param project the project applying the plugin.
+	 * @return a List of {@link PropertyFile}s
+	 */
+	def buildPropertyFileList(Project project) {
+		def p = project
+		def files = []
+		while ( p != null ) {
+			// We'll need to process the files from the top down, so build the list
+			// backwards.
+			def envName = project.environmentName
+			files.add(0, new PropertyFile("${p.projectDir}/gradle-${envName}.properties", FileType.ENVIRONMENT))
+			files.add(0, new PropertyFile("${p.projectDir}/gradle.properties", FileType.OPTIONAL))
+			p = p.parent
+		}
+		// Add the rest of the files to the end.
+		def userHome = project.getGradle().getGradleUserHomeDir();
+		files.add(new PropertyFile("${userHome}/gradle.properties", FileType.OPTIONAL))
 		// The user properties file is optional
 		if ( project.hasProperty('gradleUserName') ) {
-			processFile("${userHome}/gradle-${project.gradleUserName}.properties", project, true)
-
+			files.add(new PropertyFile("${userHome}/gradle-${project.gradleUserName}.properties", FileType.REQUIRED))
 		}
-		processCommandProperties(project)
+		return files
+	}
 
+	/**
+	 * Process a file, loading properties from it, and adding tokens.
+	 * @param filename the name of the file to process
+	 * @param project the enclosing project.
+	 * @param required whether or not processing this file is required.  Required
+	 *        files that are missing will cause an error.
+	 * @return whether or not we found the file requested.
+	 */
+	boolean processPropertyFile(Project project, PropertyFile file) {
+		def loaded = 0
+		def propFile = project.file(file.filename)
+		if ( !propFile.exists() ) {
+			project.logger.info("PropertiesPlugin:apply Skipping ${file.filename} because it does not exist")
+			return false
+		}
+		project.file("${file.filename}").withReader {reader ->
+			def userProps= new Properties()
+			userProps.load(reader)
+			userProps.each { String key, String value ->
+				project.ext.set(key, value)
+				def token = propertyToToken(key)
+				project.ext.filterTokens[token] = value
+				loaded++
+			}
+		}
+		project.logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from ${file.filename}")
+		return true
+	}
+
+	/**
+	 * Process the command line properties, setting properties and adding tokens.
+	 * @param project the enclosing project.
+	 */
+	def processCommandProperties(project) {
+		def loaded = 0
+		def commandProperties = project.gradle.startParameter.projectProperties
+		commandProperties.each { key, value ->
+			project.ext.set(key, value)
+			def token = propertyToToken(key)
+			project.ext.filterTokens[token] = project.getProperties()[key]
+			loaded++
+		}
+		project.logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from the command line")
+	}
+
+	/**
+	 * Register a task listener to add the property checking methods to all
+	 * current tasks as well as tasks that are added to the project after the
+	 * plugin is applied.
+	 *
+	 * @param project the project applying the plugin
+	 */
+	def registerTaskListener(project) {
 		// "all" executes the closure against all tasks in the project, and any
 		// new tasks added in the future.  This closure defines a requireProperty
 		// method for every task.
@@ -150,7 +245,7 @@ class PropertiesPlugin implements Plugin<Project> {
 	}
 
 	/**
-	 * Gelper method to check a recommended property and print a warning if it is
+	 * Helper method to check a recommended property and print a warning if it is
 	 * missing.
 	 * @param project the project we're dealing with
 	 * @param propertyName the name of the property we want to check
@@ -187,44 +282,4 @@ class PropertiesPlugin implements Plugin<Project> {
 		return sb.toString()
 	}
 
-	/**
-	 * Process a file, loading properties from it, and adding tokens.
-	 * @param filename the name of the file to process
-	 * @param project the enclosing project.
-	 * @param required whether or not processing this file is required.  Required
-	 *        files that are missing will cause an error.
-	 */
-	def processFile(String filename, Project project, Boolean required) {
-		def loaded = 0
-		def propFile = project.file(filename)
-		if ( propFile.exists() || required ) {
-			project.file("${filename}").withReader {reader ->
-				def userProps= new Properties()
-				userProps.load(reader)
-				userProps.each { String key, String value ->
-					project.ext.set(key, value)
-					def token = propertyToToken(key)
-					project.ext.filterTokens[token] = value
-					loaded++
-				}
-			}
-			project.logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from ${filename}")
-		}
-	}
-
-	/**
-	 * Process the command line properties, setting properties and adding tokens.
-	 * @param project the enclosing project.
-	 */
-	def processCommandProperties(project) {
-		def loaded = 0
-		def commandProperties = project.gradle.startParameter.projectProperties
-		commandProperties.each { key, value ->
-			project.ext.set(key, value)
-			def token = propertyToToken(key)
-			project.ext.filterTokens[token] = project.getProperties()[key]
-			loaded++
-		}
-		project.logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from the command line")
-	}
 }
