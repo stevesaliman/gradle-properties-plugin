@@ -4,8 +4,12 @@ properties from the various properties files.  See the [CHANGELOG]
 (http://github.com/stevesaliman/gradle-properties-plugin/blob/master/CHANGELOG)
 for recent changes.
 
-By default, Gradle applies properties to your project in a particular order.
-The last thing to define a property wins.  Gradle's order of processing is:
+Gradle can add properties to your project in several ways, as documented in the
+Gradle [User Guide]
+(http://www.gradle.org/docs/current/userguide/tutorial_this_and_that.html).
+Gradle applies the different methods in a particular order, and the value of a
+property in your project will be the value from the last thing that set the
+property.  Gradle's order of processing is:
 
 1. The gradle.properties file in the parent project's directory, if the project
 is a module of a multi-project build.
@@ -26,10 +30,10 @@ directory.
 6. The command line properties set with -P arguments.
 
 The properties plugin enhances this sequence by adding two additional types of
-property files. One for project properties that change from environment to
-environment, and one for properties that are common to a user (or client), but
-change from user to user (or client to client).  The order of execution for the
-properties plugin is:
+property files. One is for project properties that change from environment to
+environment, and the other is for properties that are common to a user (or
+client), but change from user to user (or client to client).  The order of
+execution for the properties plugin is:
 
 1. The gradle.properties file in the parent project's directory, if the project
 is a module of a multi-project build.
