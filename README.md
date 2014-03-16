@@ -1,6 +1,8 @@
 # Gradle Properties Plugin #
 The Properties plugin is a useful plugin that changes the way Gradle loads
-properties from the various properties files.
+properties from the various properties files.  See the [CHANGELOG]
+(http://github.com/stevesaliman/gradle-properties-plugin/blob/master/CHANGELOG)
+for recent changes.
 
 By default, Gradle applies properties to your project in a particular order.
 The last thing to define a property wins.  Gradle's order of processing is:
@@ -13,7 +15,15 @@ is a module of a multi-project build.
 3. The gradle.properties file in the user's ${gradleUserHomeDir}/.gradle
 directory.
 
-4. The command line properties set with -P arguments.
+4. Environment variables starting with ```ORG_GRADLE_PROJECT_```. For example,
+   ```myProperty``` would be set if there is an environment variable named
+   ```ORG_GRADLE_PROJECT_myProperty```. Case counts.
+
+5. System properties starting with ```-Dorg.gradle.project.```. For example,
+   ```myProperty``` would be set if Gradle was invoked with
+   ```-Dorg.gradle.project.myProperty```.  Again, Case counts.
+
+6. The command line properties set with -P arguments.
 
 The properties plugin enhances this sequence by adding two additional types of
 property files. One for project properties that change from environment to
@@ -52,7 +62,15 @@ change from client to client.  The gradle-${gradleUserName}.properties file
 is a great way to put the client's custom text into a single file per client,
 and specify at build time which client's banners should be used.
 
-7. The command line properties set with -P arguments.
+7. Environment variables starting with ```ORG_GRADLE_PROJECT_```. For example,
+   ```myProperty``` would be set if there is an environment variable named
+   ```ORG_GRADLE_PROJECT_myProperty```. Case counts.
+
+8. System properties starting with ```-Dorg.gradle.project.```. For example,
+   ```myProperty``` would be set if Gradle was invoked with
+   ```-Dorg.gradle.project.myProperty```.  Again, Case counts.
+
+9. The command line properties set with -P arguments.
 
 If the project was three levels deep in a project hierarchy, The steps 1 and 2
 would apply to the root project, then the plugin would check the files in the
@@ -137,7 +155,7 @@ buildscript {
 		mavenCentral()
 	}
 	dependencies {
-		classpath 'net.saliman:gradle-properties-plugin:1.2.0'
+		classpath 'net.saliman:gradle-properties-plugin:1.3.0'
 	}
 }
 

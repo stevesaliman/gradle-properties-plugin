@@ -106,6 +106,58 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	}
 
 	/**
+	 * Helper method to set the properties that Gradle would have set for us
+	 * via the command line, system properties, and environment variables.
+	 * @param setEnvironmentProperties whether or not to set the environment
+	 *        properties
+	 * @param setSystemProperties whether or not to set the system properties
+	 * @param setCommandProperties whether or not to set the command property.
+	 */
+	public void setNonFileProperties(boolean setEnvironmentProperties,
+	                                 boolean setSystemProperties,
+	                                 boolean setCommandProperties) {
+		if ( setEnvironmentProperties ) {
+			SetEnv.setEnv([ 'ORG_GRADLE_PROJECT_environmentProperty' : 'Environment.environmentValue',
+							'ORG_GRADLE_PROJECT_systemProperty' : 'Environment.systemValue',
+							'ORG_GRADLE_PROJECT_commandProperty' :'Environment.commandValue'])
+			// Make sure the utility worked.
+			assertEquals("Failed to set ORG_GRADLE_PROJECT_environmentProperty",
+							'Environment.environmentValue',
+							System.getenv('ORG_GRADLE_PROJECT_environmentProperty'))
+			assertEquals("Failed to set ORG_GRADLE_PROJECT_systemProperty",
+							'Environment.systemValue',
+							System.getenv('ORG_GRADLE_PROJECT_systemProperty'))
+			assertEquals("Failed to set ORG_GRADLE_PROJECT_commandProperty",
+							'Environment.commandValue',
+							System.getenv('ORG_GRADLE_PROJECT_commandProperty'))
+		} else {
+			SetEnv.unsetEnv(['ORG_GRADLE_PROJECT_environmentProperty',
+							'ORG_GRADLE_PROJECT_systemProperty',
+							'ORG_GRADLE_PROJECT_commandProperty'])
+			// Make sure the utility worked.
+			assertNull("Failed to clear ORG_GRADLE_PROJECT_environmentProperty",
+							System.getenv('ORG_GRADLE_PROJECT_environmentProperty'))
+			assertNull("Failed to clear ORG_GRADLE_PROJECT_systemProperty",
+							System.getenv('ORG_GRADLE_PROJECT_systemProperty'))
+			assertNull("Failed to clear ORG_GRADLE_PROJECT_commandProperty",
+							System.getenv('ORG_GRADLE_PROJECT_commandProperty'))
+
+		}
+		if ( setSystemProperties ) {
+			System.setProperty('org.gradle.project.systemProperty', 'System.systemValue')
+			System.setProperty('org.gradle.project.commandProperty', 'System.commandValue')
+		} else {
+			System.clearProperty('org.gradle.project.systemProperty')
+			System.clearProperty('org.gradle.project.commandProperty')
+		}
+		if ( setCommandProperties) {
+			def commandProps = parentProject.gradle.startParameter.projectProperties
+			commandProps.commandProperty = "Command.commandValue"
+		}
+
+	}
+
+	/**
 	 * Test the CheckProperty method when the property is missing.
 	 */
 	public void testCheckPropertyPresent() {
@@ -134,8 +186,7 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	public void testApplyCommandProperty() {
 		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user"
 		// command line
-		def commandProps = parentProject.gradle.startParameter.projectProperties
-		commandProps.commandProperty = "Command.commandValue"
+		setNonFileProperties(true, true, true)
 		parentProject.ext.gradleUserName = "user"
 		parentProject.apply plugin: 'properties'
 		assertEquals("local", parentProject.environmentName)
@@ -146,14 +197,14 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	}
 
 	/**
-	 * Verify that when a property is set everywhere but the command line, the
-	 * the user value wins
+	 * Verify that when a property is set in all the files, but not the command
+	 * line, system properties, or environment variables, the user value wins,
+	 * since it is the highest priority file.
 	 */
 	public void testApplyUserProperty() {
 		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user"
 		// command line
-		def commandProps = parentProject.gradle.startParameter.projectProperties
-		commandProps.commandProperty = "Command.commandValue"
+		setNonFileProperties(true, true, true)
 		parentProject.ext.gradleUserName = "user"
 		parentProject.apply plugin: 'properties'
 		assertEquals("local", parentProject.environmentName)
@@ -164,13 +215,12 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	}
 
 	/**
-	 * Verify that when a property is set everywhere but the command line, but
-	 * no user is given, we get the value from the home file.
+	 * Verify that when a file-based property is set in all files, but no user is
+	 * given, we get the value from the home file.
 	 */
 	public void testApplyUserPropertyNoUser() {
 		// simulate a "-PcommandProperty=Command.commandValue" command line
-		def commandProps = parentProject.gradle.startParameter.projectProperties
-		commandProps.commandProperty = "Command.commandValue"
+		setNonFileProperties(true, true, true)
 		parentProject.apply plugin: 'properties'
 		assertEquals("local", parentProject.environmentName)
 
@@ -180,14 +230,13 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	}
 
 	/**
-	 * Verify that when a property is set everywhere but the command line and
-	 * user file, the home file wins.
+	 * Verify that when a file-based property is set everywhere but the user file,
+	 * the home file wins.
 	 */
 	public void testApplyHomeProperty() {
 		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user"
 		// command line
-		def commandProps = parentProject.gradle.startParameter.projectProperties
-		commandProps.commandProperty = "Command.commandValue"
+		setNonFileProperties(true, true, true)
 		parentProject.ext.gradleUserName = "user"
 		parentProject.apply plugin: 'properties'
 		assertEquals("local", parentProject.environmentName)
@@ -206,8 +255,7 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	public void testApplyUseDefaultFile() {
 		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user"
 		// command line
-		def commandProps = parentProject.gradle.startParameter.projectProperties
-		commandProps.commandProperty = "Command.commandValue"
+		setNonFileProperties(true, true, true)
 		parentProject.ext.gradleUserName =  "user"
 		parentProject.apply plugin: 'properties'
 		assertEquals("local", parentProject.environmentName)
@@ -228,8 +276,7 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	public void testApplyUseAlternateFile() {
 		// simulate a "-PcommandProperty=Command.commandValue
 		// -PenvironmentName=test -PgradleUserName=user" command line
-		def commandProps = parentProject.gradle.startParameter.projectProperties
-		commandProps.commandProperty = "Command.commandValue"
+		setNonFileProperties(true, true, true)
 		// simulate the -PenvironmentName=test and -PgradleUserName=user option
 		parentProject.ext.gradleUserName =  'user'
 		parentProject.ext.environmentName = 'test'
@@ -252,8 +299,7 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	public void testApplyProjectProperties() {
 		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user"
 		// command line
-		def commandProps = parentProject.gradle.startParameter.projectProperties
-		commandProps.commandProperty = "Command.commandValue"
+		setNonFileProperties(true, true, true)
 		parentProject.ext.gradleUserName =  "user"
 		parentProject.apply plugin: 'properties'
 		assertEquals("local", parentProject.environmentName)
@@ -276,9 +322,7 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	 */
 	public void testApplyMissingUnspecifiedUserFile() {
 		// simulate a "-PcommandProperty=Command.commandValue" command line
-		def commandProps = parentProject.gradle.startParameter.projectProperties
-		commandProps.commandProperty = "Command.commandValue"
-
+		setNonFileProperties(true, true, true)
 		def propFile = new File("${parentProject.gradle.gradleUserHomeDir}/gradle-user.properties")
 		propFile.delete()
 		assertFalse("Failed to delete user file", propFile.exists())
@@ -290,14 +334,18 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.childEnvironmentProperty)
 		assertEquals("Home.homeValue", parentProject.homeProperty)
 		assertEquals("Home.userValue", parentProject.userProperty)
+		assertEquals("Environment.environmentValue", parentProject.environmentProperty)
+		assertEquals("System.systemValue", parentProject.systemProperty)
 		assertEquals("Command.commandValue", parentProject.commandProperty)
-		assertEquals(7, parentProject.filterTokens.size())
+		assertEquals(9, parentProject.filterTokens.size())
 		assertEquals("ParentProject.parentProjectValue", parentProject.filterTokens["parent.project.property"])
 		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.filterTokens["parent.environment.property"])
 		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.filterTokens["child.project.property"])
 		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.filterTokens["child.environment.property"])
 		assertEquals("Home.homeValue", parentProject.filterTokens["home.property"])
 		assertEquals("Home.userValue", parentProject.filterTokens["user.property"])
+		assertEquals("Environment.environmentValue", parentProject.filterTokens["environment.property"])
+		assertEquals("System.systemValue", parentProject.filterTokens["system.property"])
 		assertEquals("Command.commandValue", parentProject.filterTokens["command.property"])
 	}
 
@@ -308,8 +356,7 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	public void testApplyMissingSpecifiedUserFile() {
 		// simulate a "-PcommandProperty=Command.commandValue
 		// -PgradleUserName=dummy" command line
-		def commandProps = parentProject.gradle.startParameter.projectProperties
-		commandProps.commandProperty = "Command.commandValue"
+		setNonFileProperties(true, true, true)
 		parentProject.ext.gradleUserName = "dummy"
 
 		try {
@@ -331,8 +378,7 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 
 		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user"
 		// command line
-		def commandProps = parentProject.gradle.startParameter.projectProperties
-		commandProps.commandProperty = "Command.commandValue"
+		setNonFileProperties(true, true, true)
 		parentProject.ext.gradleUserName =  "user"
 
 		def propFile = new File("${parentProject.gradle.gradleUserHomeDir}/gradle.properties")
@@ -346,14 +392,18 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.childEnvironmentProperty)
 		assertEquals("ParentEnvironmentLocal.homeValue", parentProject.homeProperty)
 		assertEquals("User.userValue", parentProject.userProperty)
+		assertEquals("Environment.environmentValue", parentProject.environmentProperty)
+		assertEquals("System.systemValue", parentProject.systemProperty)
 		assertEquals("Command.commandValue", parentProject.commandProperty)
-		assertEquals(7, parentProject.filterTokens.size())
+		assertEquals(9, parentProject.filterTokens.size())
 		assertEquals("ParentProject.parentProjectValue", parentProject.filterTokens["parent.project.property"])
 		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.filterTokens["parent.environment.property"])
 		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.filterTokens["child.project.property"])
 		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.filterTokens["child.environment.property"])
 		assertEquals("ParentEnvironmentLocal.homeValue", parentProject.filterTokens["home.property"])
 		assertEquals("User.userValue", parentProject.filterTokens["user.property"])
+		assertEquals("Environment.environmentValue", parentProject.filterTokens["environment.property"])
+		assertEquals("System.systemValue", parentProject.filterTokens["system.property"])
 		assertEquals("Command.commandValue", parentProject.filterTokens["command.property"])
 	}
 
@@ -364,8 +414,7 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	public void testApplyMissingUnspecifiedEnvFile() {
 		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user"
 		// command line
-		def commandProps = parentProject.gradle.startParameter.projectProperties
-		commandProps.commandProperty = "Command.commandValue"
+		setNonFileProperties(true, true, true)
 		parentProject.ext.gradleUserName = "user"
 
 		def propFile = new File("${parentProject.projectDir}/gradle-local.properties")
@@ -379,14 +428,18 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		assertEquals("ParentProject.childEnvironmentValue", parentProject.childEnvironmentProperty)
 		assertEquals("Home.homeValue", parentProject.homeProperty)
 		assertEquals("User.userValue", parentProject.userProperty)
+		assertEquals("Environment.environmentValue", parentProject.environmentProperty)
+		assertEquals("System.systemValue", parentProject.systemProperty)
 		assertEquals("Command.commandValue", parentProject.commandProperty)
-		assertEquals(7, parentProject.filterTokens.size())
+		assertEquals(9, parentProject.filterTokens.size())
 		assertEquals("ParentProject.parentProjectValue", parentProject.filterTokens["parent.project.property"])
 		assertEquals("ParentProject.parentEnvironmentValue", parentProject.filterTokens["parent.environment.property"])
 		assertEquals("ParentProject.childProjectValue", parentProject.filterTokens["child.project.property"])
 		assertEquals("ParentProject.childEnvironmentValue", parentProject.filterTokens["child.environment.property"])
 		assertEquals("Home.homeValue", parentProject.filterTokens["home.property"])
 		assertEquals("User.userValue", parentProject.filterTokens["user.property"])
+		assertEquals("Environment.environmentValue", parentProject.filterTokens["environment.property"])
+		assertEquals("System.systemValue", parentProject.filterTokens["system.property"])
 		assertEquals("Command.commandValue", parentProject.filterTokens["command.property"])
 	}
 
@@ -397,8 +450,7 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	public void testApplyMissingSpecifiedEnvFile() {
 		// simulate a "-PcommandProperty=Command.commandValue
 		// -PenvironmentName=dummy -PgradleUserName=user" command line
-		def commandProps = parentProject.gradle.startParameter.projectProperties
-		commandProps.commandProperty = "Command.commandValue"
+		setNonFileProperties(true, true, true)
 		parentProject.ext.gradleUserName = "user"
 		parentProject.ext.environmentName = "dummy"
 		try {
@@ -420,8 +472,7 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		assertFalse("We shouldn't have a parent project property", parentProject.hasProperty("parentProjectProperty"))
 		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user"
 		// command line
-		def commandProps = parentProject.gradle.startParameter.projectProperties
-		commandProps.commandProperty = "Command.commandValue"
+		setNonFileProperties(true, true, true)
 		parentProject.ext.gradleUserName = "user"
 
 		def propFile = new File("${parentProject.projectDir}/gradle.properties")
@@ -435,13 +486,17 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.childEnvironmentProperty)
 		assertEquals("Home.homeValue", parentProject.homeProperty)
 		assertEquals("User.userValue", parentProject.userProperty)
+		assertEquals("Environment.environmentValue", parentProject.environmentProperty)
+		assertEquals("System.systemValue", parentProject.systemProperty)
 		assertEquals("Command.commandValue", parentProject.commandProperty)
-		assertEquals(6, parentProject.filterTokens.size())
+		assertEquals(8, parentProject.filterTokens.size())
 		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.filterTokens["parent.environment.property"])
 		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.filterTokens["child.project.property"])
 		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.filterTokens["child.environment.property"])
 		assertEquals("Home.homeValue", parentProject.filterTokens["home.property"])
 		assertEquals("User.userValue", parentProject.filterTokens["user.property"])
+		assertEquals("Environment.environmentValue", parentProject.filterTokens["environment.property"])
+		assertEquals("System.systemValue", parentProject.filterTokens["system.property"])
 		assertEquals("Command.commandValue", parentProject.filterTokens["command.property"])
 	}
 }

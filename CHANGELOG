@@ -1,0 +1,4 @@
+Changes for 1.3.0
+=================
+- Added support for setting a property via environment variables or system 
+  properties, as specified in the Gradle user guide, section 14.2. (Issue #4)

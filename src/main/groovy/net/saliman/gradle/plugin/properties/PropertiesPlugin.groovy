@@ -86,6 +86,8 @@ class PropertiesPlugin implements Plugin<Project> {
 			}
 		}
 
+		processEnvironmentProperties(project)
+		processSystemProperties(project)
 		processCommandProperties(project)
 		// Make sure we got at least one environment file if we are not in the local environment.
 		if ( project.environmentName != "local" && !foundEnvFile ) {
@@ -153,6 +155,44 @@ class PropertiesPlugin implements Plugin<Project> {
 	}
 
 	/**
+	 * Process the environment properties, setting project properties and adding
+	 * tokens for any environment variable starting with
+	 * {@code ORG_GRADLE_PROJECT_}, per the Gradle specification.
+	 * @param project the enclosing project.
+	 */
+	def processEnvironmentProperties(project) {
+		def loaded = 0
+		System.getenv().each { key, value ->
+			if ( key.startsWith("ORG_GRADLE_PROJECT_") ) {
+				project.ext.set(key.substring(19), value)
+				def token = propertyToToken(key.substring(19))
+				project.ext.filterTokens[token] = value
+				loaded++
+			}
+		}
+		project.logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from environment variables")
+	}
+
+	/**
+	 * Process the system properties, setting properties and adding tokens for
+	 * any system property starting with {@code org.gradle.project.}, per the
+	 * Gradle specification.
+	 * @param project the enclosing project.
+	 */
+	def processSystemProperties(project) {
+		def loaded = 0
+		System.properties.each { key, value ->
+			if ( key.startsWith("org.gradle.project.") ) {
+				project.ext.set(key.substring(19), value)
+				def token = propertyToToken(key.substring(19))
+				project.ext.filterTokens[token] = value
+				loaded++
+			}
+		}
+		project.logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from system properties")
+	}
+
+	/**
 	 * Process the command line properties, setting properties and adding tokens.
 	 * @param project the enclosing project.
 	 */
@@ -162,7 +202,7 @@ class PropertiesPlugin implements Plugin<Project> {
 		commandProperties.each { key, value ->
 			project.ext.set(key, value)
 			def token = propertyToToken(key)
-			project.ext.filterTokens[token] = project.getProperties()[key]
+			project.ext.filterTokens[token] = value
 			loaded++
 		}
 		project.logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from the command line")
