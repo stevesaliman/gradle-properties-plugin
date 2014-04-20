@@ -85,7 +85,8 @@ down to the plugin that applies the plugin.
 As with standard Gradle property processing, the last one in wins. The
 properties plugin also creates a "filterTokens" property that can be used to
 do token replacement in files, allowing Gradle to edit configuration files
-for you.
+for you.  See Gradle's documentation for the ```copy``` task for more
+information on filtering.
 
 The Properties plugin is designed to make it easier to work with properties that
 change from environment to environment, or client to client. It makes life
@@ -183,9 +184,11 @@ Next, the plugin creates a project property named "filterTokens".  The filter
 tokens is a map of name-value pairs that can be used when doing a filtered file
 copy.  There will be token for each property defined in the given properties
 file. The name of each token will be the name of the property from the
-properties file, after converting the camel case property name to dot notation.
-In our example, the "applicationLogDir=/opt/tomcat/logs" entry in the property
-file will create a token named "application.log.dir" with the value of
+properties file. The plugin will also create a filter with the property name
+in dot notation to allow re-use of file templates created for Ant builds.  In
+our example, the "applicationLogDir=/opt/tomcat/logs" entry in the property
+file will create 2 tokens.  One will be named "applicationLogDir", and the
+other will be named "application.log.dir".  They will both have a value of
 /opt/tomcat/logs
 
 Finally, the properties plugin adds some property closures to every task in the

@@ -145,6 +145,9 @@ class PropertiesPlugin implements Plugin<Project> {
 			userProps.load(reader)
 			userProps.each { String key, String value ->
 				project.ext.set(key, value)
+				// add the property to the filter tokens, both in camel case and dot
+				// notation.
+				project.ext.filterTokens[key] = value;
 				def token = propertyToToken(key)
 				project.ext.filterTokens[token] = value
 				loaded++
@@ -165,6 +168,9 @@ class PropertiesPlugin implements Plugin<Project> {
 		System.getenv().each { key, value ->
 			if ( key.startsWith("ORG_GRADLE_PROJECT_") ) {
 				project.ext.set(key.substring(19), value)
+				// add the property to the filter tokens, both in camel case and dot
+				// notation.
+				project.ext.filterTokens[key.substring(19)] = value;
 				def token = propertyToToken(key.substring(19))
 				project.ext.filterTokens[token] = value
 				loaded++
@@ -184,6 +190,9 @@ class PropertiesPlugin implements Plugin<Project> {
 		System.properties.each { key, value ->
 			if ( key.startsWith("org.gradle.project.") ) {
 				project.ext.set(key.substring(19), value)
+				// add the property to the filter tokens, both in camel case and dot
+				// notation.
+				project.ext.filterTokens[key.substring(19)] = value;
 				def token = propertyToToken(key.substring(19))
 				project.ext.filterTokens[token] = value
 				loaded++
@@ -201,6 +210,9 @@ class PropertiesPlugin implements Plugin<Project> {
 		def commandProperties = project.gradle.startParameter.projectProperties
 		commandProperties.each { key, value ->
 			project.ext.set(key, value)
+			// add the property to the filter tokens, both in camel case and dot
+			// notation.
+			project.ext.filterTokens[key] = value;
 			def token = propertyToToken(key)
 			project.ext.filterTokens[token] = value
 			loaded++

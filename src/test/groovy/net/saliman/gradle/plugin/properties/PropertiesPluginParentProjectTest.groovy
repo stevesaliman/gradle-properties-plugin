@@ -192,7 +192,9 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		assertEquals("local", parentProject.environmentName)
 
 		assertEquals("Command.commandValue", parentProject.commandProperty)
-		def testFilter = parentProject.filterTokens["command.property"]
+		def testFilter = parentProject.filterTokens["commandProperty"]
+		assertEquals("Command.commandValue", testFilter)
+		testFilter = parentProject.filterTokens["command.property"]
 		assertEquals("Command.commandValue", testFilter)
 	}
 
@@ -210,7 +212,9 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		assertEquals("local", parentProject.environmentName)
 
 		assertEquals("User.userValue", parentProject.userProperty)
-		def testFilter = parentProject.filterTokens["user.property"]
+		def testFilter = parentProject.filterTokens["userProperty"]
+		assertEquals("User.userValue", testFilter)
+		testFilter = parentProject.filterTokens["user.property"]
 		assertEquals("User.userValue", testFilter)
 	}
 
@@ -225,7 +229,9 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		assertEquals("local", parentProject.environmentName)
 
 		assertEquals("Home.userValue", parentProject.userProperty)
-		def testFilter = parentProject.filterTokens["user.property"]
+		def testFilter = parentProject.filterTokens["userProperty"]
+		assertEquals("Home.userValue", testFilter)
+		testFilter = parentProject.filterTokens["user.property"]
 		assertEquals("Home.userValue", testFilter)
 	}
 
@@ -242,7 +248,9 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		assertEquals("local", parentProject.environmentName)
 
 		assertEquals("Home.homeValue", parentProject.homeProperty)
-		def testFilter = parentProject.filterTokens["home.property"]
+		def testFilter = parentProject.filterTokens["homeProperty"]
+		assertEquals("Home.homeValue", testFilter)
+		testFilter = parentProject.filterTokens["home.property"]
 		assertEquals("Home.homeValue", testFilter)
 	}
 
@@ -262,7 +270,11 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 
 		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.childEnvironmentProperty)
 		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.parentEnvironmentProperty)
-		def testFilter = parentProject.filterTokens["child.environment.property"]
+		def testFilter = parentProject.filterTokens["childEnvironmentProperty"]
+		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", testFilter)
+		testFilter = parentProject.filterTokens["parentEnvironmentProperty"]
+		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", testFilter)
+		testFilter = parentProject.filterTokens["child.environment.property"]
 		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", testFilter)
 		testFilter = parentProject.filterTokens["parent.environment.property"]
 		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", testFilter)
@@ -285,7 +297,11 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 
 		assertEquals("ParentEnvironmentTest.childEnvironmentValue", parentProject.childEnvironmentProperty)
 		assertEquals("ParentEnvironmentTest.parentEnvironmentValue", parentProject.parentEnvironmentProperty)
-		def testFilter = parentProject.filterTokens["child.environment.property"]
+		def testFilter = parentProject.filterTokens["childEnvironmentProperty"]
+		assertEquals("ParentEnvironmentTest.childEnvironmentValue", testFilter)
+		testFilter = parentProject.filterTokens["parentEnvironmentProperty"]
+		assertEquals("ParentEnvironmentTest.parentEnvironmentValue", testFilter)
+		testFilter = parentProject.filterTokens["child.environment.property"]
 		assertEquals("ParentEnvironmentTest.childEnvironmentValue", testFilter)
 		testFilter = parentProject.filterTokens["parent.environment.property"]
 		assertEquals("ParentEnvironmentTest.parentEnvironmentValue", testFilter)
@@ -306,7 +322,11 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 
 		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.childProjectProperty)
 		assertEquals("ParentProject.parentProjectValue", parentProject.parentProjectProperty)
-		def testFilter = parentProject.filterTokens["child.project.property"]
+		def testFilter = parentProject.filterTokens["childProjectProperty"]
+		assertEquals("ParentEnvironmentLocal.childProjectValue", testFilter)
+		testFilter = parentProject.filterTokens["parentProjectProperty"]
+		assertEquals("ParentProject.parentProjectValue", testFilter)
+		testFilter = parentProject.filterTokens["child.project.property"]
 		assertEquals("ParentEnvironmentLocal.childProjectValue", testFilter)
 		testFilter = parentProject.filterTokens["parent.project.property"]
 		assertEquals("ParentProject.parentProjectValue", testFilter)
@@ -337,7 +357,18 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		assertEquals("Environment.environmentValue", parentProject.environmentProperty)
 		assertEquals("System.systemValue", parentProject.systemProperty)
 		assertEquals("Command.commandValue", parentProject.commandProperty)
-		assertEquals(9, parentProject.filterTokens.size())
+		assertEquals(18, parentProject.filterTokens.size())
+		// camel case notation
+		assertEquals("ParentProject.parentProjectValue", parentProject.filterTokens["parentProjectProperty"])
+		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.filterTokens["parentEnvironmentProperty"])
+		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.filterTokens["childProjectProperty"])
+		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.filterTokens["childEnvironmentProperty"])
+		assertEquals("Home.homeValue", parentProject.filterTokens["homeProperty"])
+		assertEquals("Home.userValue", parentProject.filterTokens["userProperty"])
+		assertEquals("Environment.environmentValue", parentProject.filterTokens["environmentProperty"])
+		assertEquals("System.systemValue", parentProject.filterTokens["systemProperty"])
+		assertEquals("Command.commandValue", parentProject.filterTokens["commandProperty"])
+		// dot notation
 		assertEquals("ParentProject.parentProjectValue", parentProject.filterTokens["parent.project.property"])
 		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.filterTokens["parent.environment.property"])
 		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.filterTokens["child.project.property"])
@@ -395,7 +426,18 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		assertEquals("Environment.environmentValue", parentProject.environmentProperty)
 		assertEquals("System.systemValue", parentProject.systemProperty)
 		assertEquals("Command.commandValue", parentProject.commandProperty)
-		assertEquals(9, parentProject.filterTokens.size())
+		assertEquals(18, parentProject.filterTokens.size())
+		// camel case notation
+		assertEquals("ParentProject.parentProjectValue", parentProject.filterTokens["parentProjectProperty"])
+		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.filterTokens["parentEnvironmentProperty"])
+		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.filterTokens["childProjectProperty"])
+		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.filterTokens["childEnvironmentProperty"])
+		assertEquals("ParentEnvironmentLocal.homeValue", parentProject.filterTokens["homeProperty"])
+		assertEquals("User.userValue", parentProject.filterTokens["userProperty"])
+		assertEquals("Environment.environmentValue", parentProject.filterTokens["environmentProperty"])
+		assertEquals("System.systemValue", parentProject.filterTokens["systemProperty"])
+		assertEquals("Command.commandValue", parentProject.filterTokens["commandProperty"])
+		// dot notation
 		assertEquals("ParentProject.parentProjectValue", parentProject.filterTokens["parent.project.property"])
 		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.filterTokens["parent.environment.property"])
 		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.filterTokens["child.project.property"])
@@ -431,7 +473,18 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		assertEquals("Environment.environmentValue", parentProject.environmentProperty)
 		assertEquals("System.systemValue", parentProject.systemProperty)
 		assertEquals("Command.commandValue", parentProject.commandProperty)
-		assertEquals(9, parentProject.filterTokens.size())
+		assertEquals(18, parentProject.filterTokens.size())
+		// camel case notation
+		assertEquals("ParentProject.parentProjectValue", parentProject.filterTokens["parentProjectProperty"])
+		assertEquals("ParentProject.parentEnvironmentValue", parentProject.filterTokens["parentEnvironmentProperty"])
+		assertEquals("ParentProject.childProjectValue", parentProject.filterTokens["childProjectProperty"])
+		assertEquals("ParentProject.childEnvironmentValue", parentProject.filterTokens["childEnvironmentProperty"])
+		assertEquals("Home.homeValue", parentProject.filterTokens["homeProperty"])
+		assertEquals("User.userValue", parentProject.filterTokens["userProperty"])
+		assertEquals("Environment.environmentValue", parentProject.filterTokens["environmentProperty"])
+		assertEquals("System.systemValue", parentProject.filterTokens["systemProperty"])
+		assertEquals("Command.commandValue", parentProject.filterTokens["commandProperty"])
+		// dot notation
 		assertEquals("ParentProject.parentProjectValue", parentProject.filterTokens["parent.project.property"])
 		assertEquals("ParentProject.parentEnvironmentValue", parentProject.filterTokens["parent.environment.property"])
 		assertEquals("ParentProject.childProjectValue", parentProject.filterTokens["child.project.property"])
@@ -441,6 +494,7 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		assertEquals("Environment.environmentValue", parentProject.filterTokens["environment.property"])
 		assertEquals("System.systemValue", parentProject.filterTokens["system.property"])
 		assertEquals("Command.commandValue", parentProject.filterTokens["command.property"])
+
 	}
 
 	/**
@@ -489,7 +543,17 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		assertEquals("Environment.environmentValue", parentProject.environmentProperty)
 		assertEquals("System.systemValue", parentProject.systemProperty)
 		assertEquals("Command.commandValue", parentProject.commandProperty)
-		assertEquals(8, parentProject.filterTokens.size())
+		assertEquals(16, parentProject.filterTokens.size())
+		// camel case notation
+		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.filterTokens["parentEnvironmentProperty"])
+		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.filterTokens["childProjectProperty"])
+		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.filterTokens["childEnvironmentProperty"])
+		assertEquals("Home.homeValue", parentProject.filterTokens["homeProperty"])
+		assertEquals("User.userValue", parentProject.filterTokens["userProperty"])
+		assertEquals("Environment.environmentValue", parentProject.filterTokens["environmentProperty"])
+		assertEquals("System.systemValue", parentProject.filterTokens["systemProperty"])
+		assertEquals("Command.commandValue", parentProject.filterTokens["commandProperty"])
+		// dot notation
 		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.filterTokens["parent.environment.property"])
 		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.filterTokens["child.project.property"])
 		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.filterTokens["child.environment.property"])
