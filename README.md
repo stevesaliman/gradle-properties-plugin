@@ -39,7 +39,7 @@ execution for the properties plugin is:
 is a module of a multi-project build.
 
 2. The gradle-${environmentName}.properties file in the parent project's
-directory, if the project is a module of a multi-project build. if no
+directory, if the project is a module of a multi-project build. If no
 environment is specified, the plugin will assume an environment name of "local".
 We strongly recommend adding gradle-local.properties to the .gitignore file of
 the project so that developers' local configurations don't interfere with each
@@ -53,7 +53,7 @@ if no environment is specified, the plugin will assume an environment name of
 file of the project so that develpers' local configurations don't interfere
 with each other.
 
-5. The gradle.properties file in the user's ${gradleUserHomeDir}/.gradle
+5. The gradle.properties file in the user's ${gradleUserHomeDir}
 directory. Properties in this file are generally things that span projects, or
 shouldn't be checked into a repository, such as user credentials, etc.
 
@@ -70,7 +70,7 @@ and specify at build time which client's banners should be used.
    ```myProperty``` would be set if there is an environment variable named
    ```ORG_GRADLE_PROJECT_myProperty```. Case counts.
 
-8. System properties starting with ```-Dorg.gradle.project.```. For example,
+8. System properties starting with ```org.gradle.project.```. For example,
    ```myProperty``` would be set if Gradle was invoked with
    ```-Dorg.gradle.project.myProperty```.  Again, Case counts.
 
@@ -80,7 +80,7 @@ If the project was three levels deep in a project hierarchy, The steps 1 and 2
 would apply to the root project, then the plugin would check the files in the
 parent project before continuing on with steps 3 and 4.  More formally, the
 plugin applies project and environment files, when found, from the root project
-down to the plugin that applies the plugin.
+down to the project that applies the plugin.
 
 As with standard Gradle property processing, the last one in wins. The
 properties plugin also creates a "filterTokens" property that can be used to
@@ -90,10 +90,10 @@ information on filtering.
 
 The Properties plugin is designed to make it easier to work with properties that
 change from environment to environment, or client to client. It makes life
-easier for developers who are new to a project to configure and build a
+easier for developers who are new to a project to configure and build,
 because properties for multiple environments can be stored with the project
 itself, reducing the number of external magic that needs to happen for a
-project to run. It it makes life easier for experienced developers to create
+project to run. It makes life easier for experienced developers to create
 different configurations for different scenarios on their boxes.
 
 # Why should I use it? #
@@ -178,7 +178,7 @@ allprojects {
 ```
 
 When the properties plugin is applied, three things happen. First, the plugin
-processes the various property files as described above.
+processes the various property files and property location as described above.
 
 Next, the plugin creates a project property named "filterTokens".  The filter
 tokens is a map of name-value pairs that can be used when doing a filtered file
@@ -203,19 +203,15 @@ Before the build can happen, tokenized files need to be copied to the right
 locations in the project.  This can be done with a task like the following:
 
 ```groovy
-task prep() {
+task prep(type: Copy) {
     requiredProperties "applicationLogDir", "logfileName", "defaultLogLevel"
-    doFirst {
-        copy {
-            from templateDir
-            include "log4j.properties"
-            into srcResourceDir
-            filter(org.apache.tools.ant.filters.ReplaceTokens, tokens:  project.ext.filterTokens)
-        }
-    }
+    from templateDir
+    include 'log4j.properties'
+    into srcResourceDir
+    filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.filterTokens)
 }
 
-compileJava.dependsOn << "prep"
+compileJava.dependsOn prep
 ```
 
 The reason we copy into the source resource directory instead of the build
@@ -247,9 +243,15 @@ This closure throws a MissingPropertyException if any of the named properties ar
 ```groovy
 recommendedProperty "somePropertyName", "default File Text"
 ```
-This closure is handy when there are properties that have defaults somewhere else.  For example, the build file might define it, ir the application might be able to get it from a system file.  It is most useful in alerting newer developers that something must be configured somewhere on their systems.
+This closure is handy when there are properties that have defaults somewhere else.
+For example, the build file might define it, or the application might be able to
+get it from a system file. It is most useful in alerting newer developers that
+something must be configured somewhere on their systems.
 
-The closure checks to see if the given property is defined. If it is not, a warning message is displayed alerting the user that a default will be used, and if the defaultFile has been given, the message will include it so that the developer knows which file will be providing the default value.
+The closure checks to see if the given property is defined. If it is not, a warning
+message is displayed alerting the user that a default will be used, and if the
+defaultFile has been given, the message will include it so that the developer
+knows which file will be providing the default value.
 
 **recommendedProperties**
 
@@ -261,16 +263,15 @@ This closure checks all the given property names, and prints a message if we're 
 
 # Notes #
 If a property is set in the build.gradle file before the properties plugin is
-applied, and it happens to match a property in one of the 5 standard locations
+applied, and it happens to match a property in one of the standard locations
 defined earlier, the build.gradle property's value will be overwritten.  If
 you need to set a property in build.gradle, it is best to do it after the
 properties plugin is defined.  Keep in mind that properties set in the
 build.gradle file will not be in the filterTokens.
 
-There are a few ways to change the Gradle user home directory.  The properties
-plugin uses a gradle property to use a different user home directory.  The
-properties plugin uses the same property, but I haven't done much testing of
-that yet.
+There are a few ways to change the Gradle user home directory. The properties
+plugin uses the Gradle user home directory that also Gradle itself uses, but
+I haven't done much testing of that yet.
 
 It is not required to have a gradle-local.properties file, but if you specify
 an environment with the ```-PenvironmentName=x``` flag, the environment file
