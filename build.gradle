@@ -103,8 +103,8 @@ uploadArchives {
 		    configuration = configurations.archives
 			//repository(url: "file://$buildDir/m2repo")
 			repository(url: mavenCentralUploadUrl) {
-			    authentication(userName: mavenCentralUsername,
-				               password: mavenCentralPassword)
+			    authentication(userName: project.hasProperty('mavenCentralUsername') ? mavenCentralUsername : System.properties.'user.name',
+				               password: project.hasProperty('mavenCentralPassword') ? mavenCentralPassword : '')
 				releases(updatePolicy: "always")
 				snapshots(updatePolicy: "always")
 			}
