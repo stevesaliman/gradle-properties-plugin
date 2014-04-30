@@ -82,6 +82,18 @@ parent project before continuing on with steps 3 and 4.  More formally, the
 plugin applies project and environment files, when found, from the root project
 down to the project that applies the plugin.
 
+The property names for ```environmentName``` and ```gradleUserName```
+can be configured if you don't like their name or there is a clash with
+properties you already use in your build. The property name for
+```environmentName``` can be configured with the property
+```propertiesPluginEnvironmentNameProperty``` and the property name for
+```gradleUserName``` can be configured with the property
+```propertiesPluginGradleUserNameProperty```. Those properties have
+to be set before this plugin is applied. That means you can put them in the
+standard property file locations supported by Gradle itself, in environment
+variables, system properties, -P options or in the build.gradle file itself
+before applying this plugin.
+
 As with standard Gradle property processing, the last one in wins. The
 properties plugin also creates a "filterTokens" property that can be used to
 do token replacement in files, allowing Gradle to edit configuration files

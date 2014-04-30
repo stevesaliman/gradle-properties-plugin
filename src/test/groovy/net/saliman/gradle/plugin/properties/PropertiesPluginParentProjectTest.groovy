@@ -606,4 +606,125 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		parentProject.ext.environmentName = 'bad'
 		parentProject.apply plugin: 'properties'
 	}
+
+	public void testChangePropertiesPluginEnvironmentNameProperty() {
+		setNonFileProperties(true, true, true)
+		parentProject.ext.propertiesPluginEnvironmentNameProperty =  'dummyEnvironmentName'
+		parentProject.apply plugin: 'properties'
+
+		assertFalse(parentProject.hasProperty('environmentName'))
+		assertTrue(parentProject.hasProperty('dummyEnvironmentName'))
+		assertEquals('local', parentProject.dummyEnvironmentName)
+		assertTrue(parentProject.hasProperty('parentEnvironmentProperty'))
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
+		assertFalse('ParentEnvironmentTest.parentEnvironmentValue'.equals(parentProject.parentEnvironmentProperty))
+	}
+
+	public void testSetPropertiesPluginEnvironmentNamePropertyValue() {
+		setNonFileProperties(true, true, true)
+		parentProject.ext.propertiesPluginEnvironmentNameProperty =  'dummyEnvironmentName'
+		parentProject.ext.dummyEnvironmentName =  'test'
+		parentProject.apply plugin: 'properties'
+
+		assertFalse(parentProject.hasProperty('environmentName'))
+		assertTrue(parentProject.hasProperty('dummyEnvironmentName'))
+		assertEquals('test', parentProject.dummyEnvironmentName)
+		assertTrue(parentProject.hasProperty('parentEnvironmentProperty'))
+		assertEquals('ParentEnvironmentTest.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
+		assertFalse('ParentEnvironmentLocal.parentEnvironmentValue'.equals(parentProject.parentEnvironmentProperty))
+	}
+
+	public void testChangePropertiesPluginGradleUserNameProperty() {
+		setNonFileProperties(true, true, true)
+		parentProject.ext.propertiesPluginGradleUserNameProperty =  'dummyGradleUserName'
+		parentProject.apply plugin: 'properties'
+
+		assertFalse('User.userValue'.equals(parentProject.userProperty))
+	}
+
+	public void testSetPropertiesPluginGradleUserNamePropertyValue() {
+		setNonFileProperties(true, true, true)
+		parentProject.ext.propertiesPluginGradleUserNameProperty =  'dummyGradleUserName'
+		parentProject.ext.dummyGradleUserName =  'user'
+		parentProject.apply plugin: 'properties'
+
+		assertEquals('user', parentProject.dummyGradleUserName)
+		assertTrue(parentProject.hasProperty('userProperty'))
+		assertEquals('User.userValue', parentProject.userProperty)
+	}
+
+	public void testChangePropertiesPluginGradleUserNamePropertyValueWithMissingFile() {
+		setNonFileProperties(true, true, true)
+		parentProject.ext.propertiesPluginGradleUserNameProperty =  'dummyGradleUserName'
+		parentProject.ext.dummyGradleUserName =  'dummy'
+
+		shouldFail(FileNotFoundException) {
+			parentProject.apply plugin: 'properties'
+		}
+	}
+
+	public void testChangePropertiesPluginEnvironmentNamePropertyValue() {
+		new File("${parentProject.projectDir}/gradle-bad.properties").text = "propertiesPluginEnvironmentNameProperty = dummy"
+
+		setNonFileProperties(true, true, true)
+		parentProject.ext.environmentName = 'bad'
+
+		shouldFail(GradleException) {
+			parentProject.apply plugin: 'properties'
+		}
+	}
+
+	public void testChangePropertiesPluginEnvironmentNamePropertyValueValue() {
+		new File("${parentProject.projectDir}/gradle-bad.properties").text = "dummyEnvironmentName = dummy"
+
+		setNonFileProperties(true, true, true)
+		parentProject.ext.propertiesPluginEnvironmentNameProperty = 'dummyEnvironmentName'
+		parentProject.ext.dummyEnvironmentName = 'bad'
+
+		shouldFail(GradleException) {
+			parentProject.apply plugin: 'properties'
+		}
+	}
+
+	public void testChangeEnvironmentNameValueWithChangedPropertiesPluginEnvironmentNameProperty() {
+		new File("${parentProject.projectDir}/gradle-bad.properties").text = "environmentName = dummy"
+
+		setNonFileProperties(true, true, true)
+		parentProject.ext.propertiesPluginEnvironmentNameProperty = 'dummyEnvironmentName'
+		parentProject.ext.dummyEnvironmentName = 'bad'
+		parentProject.apply plugin: 'properties'
+	}
+
+	public void testChangePropertiesPluginGradleUserNamePropertyValue() {
+		new File("${parentProject.projectDir}/gradle-bad.properties").text = "propertiesPluginGradleUserNameProperty = dummy"
+
+		setNonFileProperties(true, true, true)
+		parentProject.ext.environmentName = 'bad'
+
+		shouldFail(GradleException) {
+			parentProject.apply plugin: 'properties'
+		}
+	}
+
+	public void testChangePropertiesPluginGradleUserNamePropertyValueValue() {
+		new File("${parentProject.projectDir}/gradle-bad.properties").text = "dummyGradleUserName = dummy"
+
+		setNonFileProperties(true, true, true)
+		parentProject.ext.propertiesPluginGradleUserNameProperty = 'dummyGradleUserName'
+		parentProject.ext.environmentName = 'bad'
+		parentProject.ext.dummyGradleUserName = 'user'
+
+		shouldFail(GradleException) {
+			parentProject.apply plugin: 'properties'
+		}
+	}
+
+	public void testChangeGradleUserNameValueWithChangedPropertiesPluginGradleUserNameProperty() {
+		new File("${parentProject.projectDir}/gradle-bad.properties").text = "gradleUserName = user"
+
+		setNonFileProperties(true, true, true)
+		parentProject.ext.propertiesPluginGradleUserNameProperty = 'dummyGradleUserName'
+		parentProject.ext.environmentName = 'bad'
+		parentProject.apply plugin: 'properties'
+	}
 }

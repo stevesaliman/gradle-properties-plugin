@@ -42,6 +42,18 @@ import org.gradle.api.Project
  * properties defined on the command line with the -P option.
  * </li>
  * </ol>
+ * The property names for {@code environmentName} and {@code gradleUserName}
+ * can be configured if you don't like their name or there is a clash with
+ * properties you already use in your build. The property name for
+ * {@code environmentName} can be configured with the property
+ * {@code propertiesPluginEnvironmentNameProperty} and the property name for
+ * {@code gradleUserName} can be configured with the property
+ * {@code propertiesPluginGradleUserNameProperty}. Those properties have
+ * to be set before this plugin is applied. That means you can put them in the
+ * standard property file locations supported by Gradle itself, in environment
+ * variables, system properties, -P options or in the build.gradle file itself
+ * before applying this plugin.
+ * <p>
  * The last thing to set a property wins.  All files are optional unless an
  * environment or user is specified, in which case the file belonging to the
  * specified environment or user must exist.
@@ -81,16 +93,24 @@ class PropertiesPlugin implements Plugin<Project> {
 	 * with.
 	 */
 	void apply(Project project) {
-		// If the user hasn't set an environment, assume "local"
-		if ( !project.hasProperty('environmentName' ) ) {
-			project.ext.environmentName = 'local'
+		if ( !project.hasProperty('propertiesPluginEnvironmentNameProperty' ) ) {
+			project.ext.propertiesPluginEnvironmentNameProperty = 'environmentName'
 		}
+		if ( !project.hasProperty('propertiesPluginGradleUserNameProperty' ) ) {
+			project.ext.propertiesPluginGradleUserNameProperty = 'gradleUserName'
+		}
+
+		// If the user hasn't set an environment, assume "local"
+		if ( !project.hasProperty(project.propertiesPluginEnvironmentNameProperty ) ) {
+			project.ext."$project.propertiesPluginEnvironmentNameProperty" = 'local'
+		}
+		def envName = project."$project.propertiesPluginEnvironmentNameProperty"
 		project.ext.filterTokens = [:]
 
 		// process files from least significant to most significant. With gradle
 		// properties, Last one in wins.
 		def foundEnvFile = false
-		def propertyFiles = buildPropertyFileList(project)
+		def propertyFiles = buildPropertyFileList(project, envName)
 		propertyFiles.each { PropertyFile file ->
 			def success = processPropertyFile(project, file)
 			// Fail right away if we're missing a required file.
@@ -108,8 +128,8 @@ class PropertiesPlugin implements Plugin<Project> {
 		processSystemProperties(project)
 		processCommandProperties(project)
 		// Make sure we got at least one environment file if we are not in the local environment.
-		if ( project.environmentName != "local" && !foundEnvFile ) {
-			throw new FileNotFoundException("No environment files were found for the '${project.environmentName}' environment")
+		if ( envName != 'local' && !foundEnvFile ) {
+			throw new FileNotFoundException("No environment files were found for the '$envName' environment")
 		}
 
 		// Register a task listener that adds the property checking helper methods.
@@ -122,13 +142,12 @@ class PropertiesPlugin implements Plugin<Project> {
 	 * @param project the project applying the plugin.
 	 * @return a List of {@link PropertyFile}s
 	 */
-	def buildPropertyFileList(Project project) {
+	def buildPropertyFileList(Project project, String envName) {
 		def p = project
 		def files = []
 		while ( p != null ) {
 			// We'll need to process the files from the top down, so build the list
 			// backwards.
-			def envName = project.environmentName
 			files.add(0, new PropertyFile("${p.projectDir}/gradle-${envName}.properties", FileType.ENVIRONMENT))
 			files.add(0, new PropertyFile("${p.projectDir}/gradle.properties", FileType.OPTIONAL))
 			p = p.parent
@@ -137,8 +156,8 @@ class PropertiesPlugin implements Plugin<Project> {
 		def userHome = project.getGradle().getGradleUserHomeDir();
 		files.add(new PropertyFile("${userHome}/gradle.properties", FileType.OPTIONAL))
 		// The user properties file is optional
-		if ( project.hasProperty('gradleUserName') ) {
-			files.add(new PropertyFile("${userHome}/gradle-${project.gradleUserName}.properties", FileType.REQUIRED))
+		if ( project.hasProperty(project.propertiesPluginGradleUserNameProperty) ) {
+			files.add(new PropertyFile("${userHome}/gradle-${project."$project.propertiesPluginGradleUserNameProperty"}.properties", FileType.REQUIRED))
 		}
 		return files
 	}
@@ -162,7 +181,12 @@ class PropertiesPlugin implements Plugin<Project> {
 			def userProps= new Properties()
 			userProps.load(reader)
 			userProps.each { String key, String value ->
-				[ 'environmentName', 'gradleUserName' ].each {
+				[
+					'propertiesPluginEnvironmentNameProperty',
+					project.propertiesPluginEnvironmentNameProperty,
+					'propertiesPluginGradleUserNameProperty',
+					project.propertiesPluginGradleUserNameProperty
+				].each {
 					if ((key == it) && (project.hasProperty(it) ? value != project."$it" : value)) {
 						throw new GradleException("The property '$it' must not occur with a different value in the property files. " +
 						                          "Current value: '${project.hasProperty(it) ? project."$it" : ''}'; New value: '$value'; Property file: '$file.filename'")
