@@ -1,5 +1,6 @@
 package net.saliman.gradle.plugin.properties
 
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -144,6 +145,13 @@ class PropertiesPlugin implements Plugin<Project> {
 			def userProps= new Properties()
 			userProps.load(reader)
 			userProps.each { String key, String value ->
+				[ 'environmentName', 'gradleUserName' ].each {
+					if ((key == it) && (project.hasProperty(it) ? value != project."$it" : value)) {
+						throw new GradleException("The property '$it' must not occur with a different value in the property files. " +
+						                          "Current value: '${project.hasProperty(it) ? project."$it" : ''}'; New value: '$value'; Property file: '$file.filename'")
+					}
+				}
+
 				project.ext.set(key, value)
 				// add the property to the filter tokens, both in camel case and dot
 				// notation.

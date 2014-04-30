@@ -1,6 +1,7 @@
 package net.saliman.gradle.plugin.properties
 
 import org.gradle.testfixtures.ProjectBuilder
+import org.gradle.api.GradleException
 
 /**
  * Test class for parent projects that apply Properties plugin.  In a multi
@@ -11,7 +12,7 @@ import org.gradle.testfixtures.ProjectBuilder
  * Note that we set properties in each test because we can't seem to clear a
  * property once it is set, and Gradle itself reads some of the properties
  * before we apply the plugin.
- * 
+ *
  * @author Steven C. Saliman
  */
 class PropertiesPluginParentProjectTest extends GroovyTestCase {
@@ -562,5 +563,47 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		assertEquals("Environment.environmentValue", parentProject.filterTokens["environment.property"])
 		assertEquals("System.systemValue", parentProject.filterTokens["system.property"])
 		assertEquals("Command.commandValue", parentProject.filterTokens["command.property"])
+	}
+
+	public void testChangeEnvironmentNameValue() {
+		new File("${parentProject.projectDir}/gradle-bad.properties").text = "environmentName = dummy"
+
+		setNonFileProperties(true, true, true)
+		parentProject.ext.environmentName = 'bad'
+
+		shouldFail(GradleException) {
+			parentProject.apply plugin: 'properties'
+		}
+	}
+
+	public void testChangeGradleUserNameValue() {
+		new File("${parentProject.projectDir}/gradle-bad.properties").text = "gradleUserName = dummy"
+
+		setNonFileProperties(true, true, true)
+		parentProject.ext.environmentName = 'bad'
+		parentProject.ext.gradleUserName = 'user'
+
+		shouldFail(GradleException) {
+			parentProject.apply plugin: 'properties'
+		}
+	}
+
+	public void testSetGradleUserNameValue() {
+		new File("${parentProject.projectDir}/gradle-bad.properties").text = "gradleUserName = dummy"
+
+		setNonFileProperties(true, true, true)
+		parentProject.ext.environmentName = 'bad'
+
+		shouldFail(GradleException) {
+			parentProject.apply plugin: 'properties'
+		}
+	}
+
+	public void testReSetEnvironmentNameValue() {
+		new File("${parentProject.projectDir}/gradle-bad.properties").text = "environmentName = bad"
+
+		setNonFileProperties(true, true, true)
+		parentProject.ext.environmentName = 'bad'
+		parentProject.apply plugin: 'properties'
 	}
 }
