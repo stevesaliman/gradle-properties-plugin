@@ -10,17 +10,33 @@ import org.gradle.api.Project
  * order:<br>
  * <ol>
  * <li>
- * gradle.properties in the project directory
+ * gradle.properties in the parent project's directory, if the project
+ * is a module of a multi-project build.
  * </li>
  * <li>
- * gradle-${environmentName}.properties in the project directory.  If no
+ * gradle-${environmentName}.properties in the parent project's directory,
+ * if the project is a module of a multi-project build. If no
  * environment name is specified, the default is "local".
  * </li>
  * <li>
- * gradle.properties in the user's ${home}/.gradle directory.
+ * gradle.properties in the project directory
  * </li>
  * <li>
- * gradle-${gradleUserName}.properties in the user's ${home}/.gradle directory.
+ * gradle-${environmentName}.properties in the project directory. If no
+ * environment name is specified, the default is "local".
+ * </li>
+ * <li>
+ * gradle.properties in the user's ${gradleUserHomeDir} directory.
+ * </li>
+ * <li>
+ * If the ${gradleUserName} property is set, gradle-${gradleUserName}.properties
+ * in the user's ${gradleUserHomeDir} directory.
+ * </li>
+ * <li>
+ * Environment variables starting with {@code ORG_GRADLE_PROJECT_}.
+ * </li>
+ * <li>
+ * System properties starting with {@code org.gradle.project.}.
  * </li>
  * <li>
  * properties defined on the command line with the -P option.
@@ -32,23 +48,24 @@ import org.gradle.api.Project
  * <p>
  * As properties are set, they are also placed in a filterTokens property.
  * the filterTokens property is a map of tokens that can be used when doing a
- * filtered file copy.  There will be a token for each property defined by one
- * of the 5 listed methods.  The name of each token will be the name of the
+ * filtered file copy. There will be a token for each property defined by one
+ * of the listed methods. The name of each token will be the name of the
  * property from the properties file, after converting the camel case property
  * name to dot notation. For example, if you have a myPropertyName property in
  * the file, the plugin will create a my.property.name filter token, whose
- * value is the property's value.
+ * value is the property's value. The original camel case name will also be
+ * added as token.
  * <p>
  * Finally, the properties plugin also adds some properties to every task in
  * your build:
  * <p>{@code requiredProperty} and {@code requiredProperties} can be used to
  * define what properties must be present for that task to work.  Required
- * properties will be checked after configuration, is complete, but before any
+ * properties will be checked after configuration is complete, but before any
  * tasks are executed.
  * <p>
  * {@code recommendedProperty} and {@code recommendedProperties} can be used
  * to define properties that the task can work without, but it (or the deployed
- * application) will use a default value for the property.  The value of this
+ * application) will use a default value for the property. The value of this
  * property is that we can prompt new developers to either provide a property,
  * or make sure default config files are set up correctly.
  * <p>
