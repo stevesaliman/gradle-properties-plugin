@@ -292,7 +292,7 @@ class PropertiesPlugin implements Plugin<Project> {
 					// ... But we only want to actually do it if the task needing the
 					// property is actually going to be executed.
 					if (graph.hasTask(task.path)) {
-						checkProperty(project, propertyName)
+						checkProperty(project, propertyName, task.path)
 					}
 				}
 			}
@@ -302,7 +302,7 @@ class PropertiesPlugin implements Plugin<Project> {
 				project.gradle.taskGraph.whenReady { graph ->
 					if (graph.hasTask(task.path)) {
 						for ( propertyName in propertyNames ) {
-							checkProperty(project, propertyName)
+							checkProperty(project, propertyName, task.path)
 						}
 					}
 				}
@@ -312,7 +312,7 @@ class PropertiesPlugin implements Plugin<Project> {
 			task.ext.recommendedProperty = { String propertyName, String defaultFile=null ->
 				project.gradle.taskGraph.whenReady { graph ->
 					if (graph.hasTask(task.path)) {
-						checkRecommendedProperty(project, propertyName, defaultFile)
+						checkRecommendedProperty(project, propertyName, task.path, defaultFile)
 					}
 				}
 			}
@@ -324,7 +324,7 @@ class PropertiesPlugin implements Plugin<Project> {
 						def propertyNames = hash['names']
 						def defaultFile = hash['defaultFile']
 						for ( propertyName in propertyNames ) {
-							checkRecommendedProperty(project, propertyName, defaultFile)
+							checkRecommendedProperty(project, propertyName, task.path, defaultFile)
 						}
 					}
 				}
@@ -339,9 +339,9 @@ class PropertiesPlugin implements Plugin<Project> {
 	 * @throws MissingPropertyException if the named property is not in the
 	 * project.
 	 */
-	def checkProperty(project, propertyName) {
+	def checkProperty(project, propertyName, taskName) {
 		if ( !project.hasProperty(propertyName) ) {
-			throw new MissingPropertyException("You must set the '${propertyName}' property")
+			throw new MissingPropertyException("You must set the '${propertyName}' property for the '$taskName' task")
 		}
 	}
 
@@ -353,11 +353,11 @@ class PropertiesPlugin implements Plugin<Project> {
 	 * @param defaultFile an optional description of where the project will get
 	 *        the value if it isn't specified during the build.
 	 */
-	def checkRecommendedProperty(project, propertyName, defaultFile) {
+	def checkRecommendedProperty(project, propertyName, taskName, defaultFile) {
 		if ( !project.hasProperty(propertyName) ) {
-			def message = "WARNING: ${propertyName} has no value, using default"
+			def message = "WARNING: '${propertyName}', required by '$taskName' task, has no value, using default"
 			if ( defaultFile != null ) {
-				message = message + " from ${defaultFile}"
+				message = message + " from '${defaultFile}'"
 			}
 			println message
 		}
