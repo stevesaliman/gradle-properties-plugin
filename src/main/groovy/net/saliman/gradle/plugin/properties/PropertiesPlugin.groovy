@@ -3,6 +3,9 @@ package net.saliman.gradle.plugin.properties
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.initialization.Settings
+import org.gradle.api.plugins.PluginAware
+import org.slf4j.LoggerFactory
 
 /**
  * This is the main class for the properties plugin. When the properties
@@ -86,33 +89,30 @@ import org.gradle.api.Project
  *
  * @author Steven C. Saliman
  */
-class PropertiesPlugin implements Plugin<Project> {
-	/**
-	 * This method is called then the properties-plugin is applied.
-	 * @param project Gradle will pass in the project instance we're dealing
-	 * with.
-	 */
-	void apply(Project project) {
-		if ( !project.hasProperty('propertiesPluginEnvironmentNameProperty' ) ) {
-			project.ext.propertiesPluginEnvironmentNameProperty = 'environmentName'
+class PropertiesPlugin implements Plugin<PluginAware> {
+	def logger = LoggerFactory.getLogger getClass()
+
+	void apply(pluginAware, buildPropertyFileList) {
+		if ( !pluginAware.hasProperty('propertiesPluginEnvironmentNameProperty' ) ) {
+			pluginAware.ext.propertiesPluginEnvironmentNameProperty = 'environmentName'
 		}
-		if ( !project.hasProperty('propertiesPluginGradleUserNameProperty' ) ) {
-			project.ext.propertiesPluginGradleUserNameProperty = 'gradleUserName'
+		if ( !pluginAware.hasProperty('propertiesPluginGradleUserNameProperty' ) ) {
+			pluginAware.ext.propertiesPluginGradleUserNameProperty = 'gradleUserName'
 		}
 
 		// If the user hasn't set an environment, assume "local"
-		if ( !project.hasProperty(project.propertiesPluginEnvironmentNameProperty ) ) {
-			project.ext."$project.propertiesPluginEnvironmentNameProperty" = 'local'
+		if ( !pluginAware.hasProperty(pluginAware.propertiesPluginEnvironmentNameProperty ) ) {
+			pluginAware.ext."$pluginAware.propertiesPluginEnvironmentNameProperty" = 'local'
 		}
-		def envName = project."$project.propertiesPluginEnvironmentNameProperty"
-		project.ext.filterTokens = [:]
+		def envName = pluginAware."$pluginAware.propertiesPluginEnvironmentNameProperty"
+		pluginAware.ext.filterTokens = [:]
 
 		// process files from least significant to most significant. With gradle
 		// properties, Last one in wins.
 		def foundEnvFile = false
-		def propertyFiles = buildPropertyFileList(project, envName)
+		def propertyFiles = buildPropertyFileList(pluginAware, envName)
 		propertyFiles.each { PropertyFile file ->
-			def success = processPropertyFile(project, file)
+			def success = processPropertyFile(pluginAware, file)
 			// Fail right away if we're missing a required file.
 			if ( file.fileType == FileType.REQUIRED && !success ) {
 				throw new FileNotFoundException("could not process required file ${file.filename} ")
@@ -124,16 +124,28 @@ class PropertiesPlugin implements Plugin<Project> {
 			}
 		}
 
-		processEnvironmentProperties(project)
-		processSystemProperties(project)
-		processCommandProperties(project)
+		processEnvironmentProperties(pluginAware)
+		processSystemProperties(pluginAware)
+		processCommandProperties(pluginAware)
 		// Make sure we got at least one environment file if we are not in the local environment.
 		if ( envName != 'local' && !foundEnvFile ) {
 			throw new FileNotFoundException("No environment files were found for the '$envName' environment")
 		}
+	}
 
-		// Register a task listener that adds the property checking helper methods.
-		registerTaskListener(project)
+	/**
+	 * This method is called then the properties-plugin is applied.
+	 */
+	void apply(PluginAware pluginAware) {
+		if (pluginAware instanceof Settings) {
+			apply pluginAware, this.&buildPropertyFileListFromSettings
+		} else if (pluginAware instanceof Project) {
+			apply pluginAware, this.&buildPropertyFileListFromProject
+			// Register a task listener that adds the property checking helper methods.
+			registerTaskListener(pluginAware)
+		} else {
+			throw new IllegalArgumentException("${pluginAware.getClass()} is currently not supported as apply target, please report if you need it")
+		}
 	}
 
 	/**
@@ -142,7 +154,7 @@ class PropertiesPlugin implements Plugin<Project> {
 	 * @param project the project applying the plugin.
 	 * @return a List of {@link PropertyFile}s
 	 */
-	def buildPropertyFileList(Project project, String envName) {
+	private buildPropertyFileListFromProject(project, envName) {
 		def p = project
 		def files = []
 		while ( p != null ) {
@@ -152,109 +164,130 @@ class PropertiesPlugin implements Plugin<Project> {
 			files.add(0, new PropertyFile("${p.projectDir}/gradle.properties", FileType.OPTIONAL))
 			p = p.parent
 		}
+		addCommonPropertyFileList(project, files)
+	}
+
+	/**
+	 * Build a list of property files to process, in the order in which they
+	 * need to be processed.
+	 * @param settings the settings applying the plugin.
+	 * @return a List of {@link PropertyFile}s
+	 */
+	private buildPropertyFileListFromSettings(settings, envName) {
+		def files = []
+		files.add(new PropertyFile("${settings.rootDir}/gradle.properties", FileType.OPTIONAL))
+		files.add(new PropertyFile("${settings.rootDir}/gradle-${envName}.properties", FileType.ENVIRONMENT))
+		if (settings.rootDir != settings.settingsDir) {
+			files.add(new PropertyFile("${settings.settingsDir}/gradle.properties", FileType.OPTIONAL))
+			files.add(new PropertyFile("${settings.settingsDir}/gradle-${envName}.properties", FileType.ENVIRONMENT))
+		}
+		addCommonPropertyFileList(settings, files)
+	}
+
+	private addCommonPropertyFileList(pluginAware, files) {
 		// Add the rest of the files to the end.
-		def userHome = project.getGradle().getGradleUserHomeDir();
+		def userHome = pluginAware.getGradle().getGradleUserHomeDir();
 		files.add(new PropertyFile("${userHome}/gradle.properties", FileType.OPTIONAL))
 		// The user properties file is optional
-		if ( project.hasProperty(project.propertiesPluginGradleUserNameProperty) ) {
-			files.add(new PropertyFile("${userHome}/gradle-${project."$project.propertiesPluginGradleUserNameProperty"}.properties", FileType.REQUIRED))
+		if ( pluginAware.hasProperty(pluginAware.propertiesPluginGradleUserNameProperty) ) {
+			files.add(new PropertyFile("${userHome}/gradle-${pluginAware."$pluginAware.propertiesPluginGradleUserNameProperty"}.properties", FileType.REQUIRED))
 		}
-		return files
+		files
 	}
 
 	/**
 	 * Process a file, loading properties from it, and adding tokens.
 	 * @param filename the name of the file to process
-	 * @param project the enclosing project.
+	 * @param pluginAware the enclosing pluginAware.
 	 * @param required whether or not processing this file is required.  Required
 	 *        files that are missing will cause an error.
 	 * @return whether or not we found the file requested.
 	 */
-	boolean processPropertyFile(Project project, PropertyFile file) {
+	boolean processPropertyFile(pluginAware, PropertyFile file) {
 		def loaded = 0
-		def propFile = project.file(file.filename)
+		def propFile = new File(file.filename)
 		if ( !propFile.exists() ) {
-			project.logger.info("PropertiesPlugin:apply Skipping ${file.filename} because it does not exist")
+			logger.info("PropertiesPlugin:apply Skipping ${file.filename} because it does not exist")
 			return false
 		}
-		project.file("${file.filename}").withReader {reader ->
+		new File(file.filename).withReader {reader ->
 			def userProps= new Properties()
 			userProps.load(reader)
 			userProps.each { String key, String value ->
-				project.ext.set(key, value)
+				pluginAware.ext."$key" = value
 				// add the property to the filter tokens, both in camel case and dot
 				// notation.
-				project.ext.filterTokens[key] = value;
+				pluginAware.ext.filterTokens[key] = value;
 				def token = propertyToToken(key)
-				project.ext.filterTokens[token] = value
+				pluginAware.ext.filterTokens[token] = value
 				loaded++
 			}
 		}
-		project.logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from ${file.filename}")
+		logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from ${file.filename}")
 		return true
 	}
 
 	/**
-	 * Process the environment properties, setting project properties and adding
+	 * Process the environment properties, setting pluginAware properties and adding
 	 * tokens for any environment variable starting with
 	 * {@code ORG_GRADLE_PROJECT_}, per the Gradle specification.
-	 * @param project the enclosing project.
+	 * @param pluginAware the enclosing pluginAware.
 	 */
-	def processEnvironmentProperties(project) {
+	def processEnvironmentProperties(pluginAware) {
 		def loaded = 0
 		System.getenv().each { key, value ->
 			if ( key.startsWith("ORG_GRADLE_PROJECT_") ) {
-				project.ext.set(key.substring(19), value)
+				pluginAware.ext."${key.substring(19)}" = value
 				// add the property to the filter tokens, both in camel case and dot
 				// notation.
-				project.ext.filterTokens[key.substring(19)] = value;
+				pluginAware.ext.filterTokens[key.substring(19)] = value;
 				def token = propertyToToken(key.substring(19))
-				project.ext.filterTokens[token] = value
+				pluginAware.ext.filterTokens[token] = value
 				loaded++
 			}
 		}
-		project.logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from environment variables")
+		logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from environment variables")
 	}
 
 	/**
 	 * Process the system properties, setting properties and adding tokens for
 	 * any system property starting with {@code org.gradle.project.}, per the
 	 * Gradle specification.
-	 * @param project the enclosing project.
+	 * @param pluginAware the enclosing pluginAware.
 	 */
-	def processSystemProperties(project) {
+	def processSystemProperties(pluginAware) {
 		def loaded = 0
 		System.properties.each { key, value ->
 			if ( key.startsWith("org.gradle.project.") ) {
-				project.ext.set(key.substring(19), value)
+				pluginAware.ext."${key.substring(19)}" = value
 				// add the property to the filter tokens, both in camel case and dot
 				// notation.
-				project.ext.filterTokens[key.substring(19)] = value;
+				pluginAware.ext.filterTokens[key.substring(19)] = value;
 				def token = propertyToToken(key.substring(19))
-				project.ext.filterTokens[token] = value
+				pluginAware.ext.filterTokens[token] = value
 				loaded++
 			}
 		}
-		project.logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from system properties")
+		logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from system properties")
 	}
 
 	/**
 	 * Process the command line properties, setting properties and adding tokens.
-	 * @param project the enclosing project.
+	 * @param pluginAware the enclosing pluginAware.
 	 */
-	def processCommandProperties(project) {
+	def processCommandProperties(pluginAware) {
 		def loaded = 0
-		def commandProperties = project.gradle.startParameter.projectProperties
+		def commandProperties = pluginAware.gradle.startParameter.projectProperties
 		commandProperties.each { key, value ->
-			project.ext.set(key, value)
+			pluginAware.ext."$key" = value
 			// add the property to the filter tokens, both in camel case and dot
 			// notation.
-			project.ext.filterTokens[key] = value;
+			pluginAware.ext.filterTokens[key] = value;
 			def token = propertyToToken(key)
-			project.ext.filterTokens[token] = value
+			pluginAware.ext.filterTokens[token] = value
 			loaded++
 		}
-		project.logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from the command line")
+		logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from the command line")
 	}
 
 	/**
