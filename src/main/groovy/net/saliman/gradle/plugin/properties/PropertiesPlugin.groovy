@@ -1,5 +1,6 @@
 package net.saliman.gradle.plugin.properties
 
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -9,45 +10,74 @@ import org.gradle.api.Project
  * order:<br>
  * <ol>
  * <li>
- * gradle.properties in the project directory
+ * gradle.properties in the parent project's directory, if the project
+ * is a module of a multi-project build.
  * </li>
  * <li>
- * gradle-${environmentName}.properties in the project directory.  If no
+ * gradle-${environmentName}.properties in the parent project's directory,
+ * if the project is a module of a multi-project build. If no
  * environment name is specified, the default is "local".
  * </li>
  * <li>
- * gradle.properties in the user's ${home}/.gradle directory.
+ * gradle.properties in the project directory
  * </li>
  * <li>
- * gradle-${gradleUserName}.properties in the user's ${home}/.gradle directory.
+ * gradle-${environmentName}.properties in the project directory. If no
+ * environment name is specified, the default is "local".
+ * </li>
+ * <li>
+ * gradle.properties in the user's ${gradleUserHomeDir} directory.
+ * </li>
+ * <li>
+ * If the ${gradleUserName} property is set, gradle-${gradleUserName}.properties
+ * in the user's ${gradleUserHomeDir} directory.
+ * </li>
+ * <li>
+ * Environment variables starting with {@code ORG_GRADLE_PROJECT_}.
+ * </li>
+ * <li>
+ * System properties starting with {@code org.gradle.project.}.
  * </li>
  * <li>
  * properties defined on the command line with the -P option.
  * </li>
  * </ol>
+ * The property names for {@code environmentName} and {@code gradleUserName}
+ * can be configured if you don't like their name or there is a clash with
+ * properties you already use in your build. The property name for
+ * {@code environmentName} can be configured with the property
+ * {@code propertiesPluginEnvironmentNameProperty} and the property name for
+ * {@code gradleUserName} can be configured with the property
+ * {@code propertiesPluginGradleUserNameProperty}. Those properties have
+ * to be set before this plugin is applied. That means you can put them in the
+ * standard property file locations supported by Gradle itself, in environment
+ * variables, system properties, -P options or in the build.gradle file itself
+ * before applying this plugin.
+ * <p>
  * The last thing to set a property wins.  All files are optional unless an
  * environment or user is specified, in which case the file belonging to the
  * specified environment or user must exist.
  * <p>
  * As properties are set, they are also placed in a filterTokens property.
  * the filterTokens property is a map of tokens that can be used when doing a
- * filtered file copy.  There will be a token for each property defined by one
- * of the 5 listed methods.  The name of each token will be the name of the
+ * filtered file copy. There will be a token for each property defined by one
+ * of the listed methods. The name of each token will be the name of the
  * property from the properties file, after converting the camel case property
  * name to dot notation. For example, if you have a myPropertyName property in
  * the file, the plugin will create a my.property.name filter token, whose
- * value is the property's value.
+ * value is the property's value. The original camel case name will also be
+ * added as token.
  * <p>
  * Finally, the properties plugin also adds some properties to every task in
  * your build:
  * <p>{@code requiredProperty} and {@code requiredProperties} can be used to
  * define what properties must be present for that task to work.  Required
- * properties will be checked after configuration, is complete, but before any
+ * properties will be checked after configuration is complete, but before any
  * tasks are executed.
  * <p>
  * {@code recommendedProperty} and {@code recommendedProperties} can be used
  * to define properties that the task can work without, but it (or the deployed
- * application) will use a default value for the property.  The value of this
+ * application) will use a default value for the property. The value of this
  * property is that we can prompt new developers to either provide a property,
  * or make sure default config files are set up correctly.
  * <p>
@@ -63,16 +93,24 @@ class PropertiesPlugin implements Plugin<Project> {
 	 * with.
 	 */
 	void apply(Project project) {
-		// If the user hasn't set an environment, assume "local"
-		if ( !project.hasProperty('environmentName' ) ) {
-			project.ext.environmentName = 'local'
+		if ( !project.hasProperty('propertiesPluginEnvironmentNameProperty' ) ) {
+			project.ext.propertiesPluginEnvironmentNameProperty = 'environmentName'
 		}
+		if ( !project.hasProperty('propertiesPluginGradleUserNameProperty' ) ) {
+			project.ext.propertiesPluginGradleUserNameProperty = 'gradleUserName'
+		}
+
+		// If the user hasn't set an environment, assume "local"
+		if ( !project.hasProperty(project.propertiesPluginEnvironmentNameProperty ) ) {
+			project.ext."$project.propertiesPluginEnvironmentNameProperty" = 'local'
+		}
+		def envName = project."$project.propertiesPluginEnvironmentNameProperty"
 		project.ext.filterTokens = [:]
 
 		// process files from least significant to most significant. With gradle
 		// properties, Last one in wins.
 		def foundEnvFile = false
-		def propertyFiles = buildPropertyFileList(project)
+		def propertyFiles = buildPropertyFileList(project, envName)
 		propertyFiles.each { PropertyFile file ->
 			def success = processPropertyFile(project, file)
 			// Fail right away if we're missing a required file.
@@ -90,8 +128,8 @@ class PropertiesPlugin implements Plugin<Project> {
 		processSystemProperties(project)
 		processCommandProperties(project)
 		// Make sure we got at least one environment file if we are not in the local environment.
-		if ( project.environmentName != "local" && !foundEnvFile ) {
-			throw new FileNotFoundException("No environment files were found for the '${project.environmentName}' environment")
+		if ( envName != 'local' && !foundEnvFile ) {
+			throw new FileNotFoundException("No environment files were found for the '$envName' environment")
 		}
 
 		// Register a task listener that adds the property checking helper methods.
@@ -104,13 +142,12 @@ class PropertiesPlugin implements Plugin<Project> {
 	 * @param project the project applying the plugin.
 	 * @return a List of {@link PropertyFile}s
 	 */
-	def buildPropertyFileList(Project project) {
+	def buildPropertyFileList(Project project, String envName) {
 		def p = project
 		def files = []
 		while ( p != null ) {
 			// We'll need to process the files from the top down, so build the list
 			// backwards.
-			def envName = project.environmentName
 			files.add(0, new PropertyFile("${p.projectDir}/gradle-${envName}.properties", FileType.ENVIRONMENT))
 			files.add(0, new PropertyFile("${p.projectDir}/gradle.properties", FileType.OPTIONAL))
 			p = p.parent
@@ -119,8 +156,8 @@ class PropertiesPlugin implements Plugin<Project> {
 		def userHome = project.getGradle().getGradleUserHomeDir();
 		files.add(new PropertyFile("${userHome}/gradle.properties", FileType.OPTIONAL))
 		// The user properties file is optional
-		if ( project.hasProperty('gradleUserName') ) {
-			files.add(new PropertyFile("${userHome}/gradle-${project.gradleUserName}.properties", FileType.REQUIRED))
+		if ( project.hasProperty(project.propertiesPluginGradleUserNameProperty) ) {
+			files.add(new PropertyFile("${userHome}/gradle-${project."$project.propertiesPluginGradleUserNameProperty"}.properties", FileType.REQUIRED))
 		}
 		return files
 	}
@@ -144,6 +181,18 @@ class PropertiesPlugin implements Plugin<Project> {
 			def userProps= new Properties()
 			userProps.load(reader)
 			userProps.each { String key, String value ->
+				[
+					'propertiesPluginEnvironmentNameProperty',
+					project.propertiesPluginEnvironmentNameProperty,
+					'propertiesPluginGradleUserNameProperty',
+					project.propertiesPluginGradleUserNameProperty
+				].each {
+					if ((key == it) && (project.hasProperty(it) ? value != project."$it" : value)) {
+						throw new GradleException("The property '$it' must not occur with a different value in the property files. " +
+						                          "Current value: '${project.hasProperty(it) ? project."$it" : ''}'; New value: '$value'; Property file: '$file.filename'")
+					}
+				}
+
 				project.ext.set(key, value)
 				// add the property to the filter tokens, both in camel case and dot
 				// notation.
@@ -243,7 +292,7 @@ class PropertiesPlugin implements Plugin<Project> {
 					// ... But we only want to actually do it if the task needing the
 					// property is actually going to be executed.
 					if (graph.hasTask(task.path)) {
-						checkProperty(project, propertyName)
+						checkProperty(project, propertyName, task.path)
 					}
 				}
 			}
@@ -253,7 +302,7 @@ class PropertiesPlugin implements Plugin<Project> {
 				project.gradle.taskGraph.whenReady { graph ->
 					if (graph.hasTask(task.path)) {
 						for ( propertyName in propertyNames ) {
-							checkProperty(project, propertyName)
+							checkProperty(project, propertyName, task.path)
 						}
 					}
 				}
@@ -263,7 +312,7 @@ class PropertiesPlugin implements Plugin<Project> {
 			task.ext.recommendedProperty = { String propertyName, String defaultFile=null ->
 				project.gradle.taskGraph.whenReady { graph ->
 					if (graph.hasTask(task.path)) {
-						checkRecommendedProperty(project, propertyName, defaultFile)
+						checkRecommendedProperty(project, propertyName, task.path, defaultFile)
 					}
 				}
 			}
@@ -275,7 +324,7 @@ class PropertiesPlugin implements Plugin<Project> {
 						def propertyNames = hash['names']
 						def defaultFile = hash['defaultFile']
 						for ( propertyName in propertyNames ) {
-							checkRecommendedProperty(project, propertyName, defaultFile)
+							checkRecommendedProperty(project, propertyName, task.path, defaultFile)
 						}
 					}
 				}
@@ -290,9 +339,9 @@ class PropertiesPlugin implements Plugin<Project> {
 	 * @throws MissingPropertyException if the named property is not in the
 	 * project.
 	 */
-	def checkProperty(project, propertyName) {
+	def checkProperty(project, propertyName, taskName) {
 		if ( !project.hasProperty(propertyName) ) {
-			throw new MissingPropertyException("You must set the '${propertyName}' property")
+			throw new MissingPropertyException("You must set the '${propertyName}' property for the '$taskName' task")
 		}
 	}
 
@@ -304,11 +353,11 @@ class PropertiesPlugin implements Plugin<Project> {
 	 * @param defaultFile an optional description of where the project will get
 	 *        the value if it isn't specified during the build.
 	 */
-	def checkRecommendedProperty(project, propertyName, defaultFile) {
+	def checkRecommendedProperty(project, propertyName, taskName, defaultFile) {
 		if ( !project.hasProperty(propertyName) ) {
-			def message = "WARNING: ${propertyName} has no value, using default"
+			def message = "WARNING: '${propertyName}', required by '$taskName' task, has no value, using default"
 			if ( defaultFile != null ) {
-				message = message + " from ${defaultFile}"
+				message = message + " from '${defaultFile}'"
 			}
 			println message
 		}

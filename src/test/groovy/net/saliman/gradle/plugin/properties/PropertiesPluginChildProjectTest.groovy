@@ -171,7 +171,7 @@ class PropertiesPluginChildProjectTest extends GroovyTestCase {
 	public void testCheckPropertyMissing() {
 		childProject.ext.someProperty = "someValue"
 		// we succeed if we don't get an exception.
-		plugin.checkProperty(childProject, "someProperty")
+		plugin.checkProperty(childProject, "someProperty", "someTask")
 
 	}
 
@@ -181,7 +181,7 @@ class PropertiesPluginChildProjectTest extends GroovyTestCase {
 	public void testCheckPropertyPresent() {
 		// we succeed if we don't get an exception.
 		shouldFail(MissingPropertyException) {
-			plugin.checkProperty(childProject, "someProperty")
+			plugin.checkProperty(childProject, "someProperty", "someTask")
 		}
 
 	}
