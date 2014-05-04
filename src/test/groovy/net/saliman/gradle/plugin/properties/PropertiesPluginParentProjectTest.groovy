@@ -576,6 +576,18 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		}
 	}
 
+	public void testChangeEnvironmentNameValueWithoutEffect() {
+		new File("${parentProject.projectDir}/gradle-bad.properties").text = "environmentName = dummy"
+
+		setNonFileProperties(true, true, true)
+		parentProject.gradle.startParameter.projectProperties.environmentName = 'bad'
+		// As Gradle is not "booted", the start parameter is not
+		// transferred to a project property, so we do it manually here
+		parentProject.ext.environmentName = 'bad'
+		parentProject.apply plugin: 'properties'
+		assertEquals('bad', parentProject.environmentName)
+	}
+
 	public void testChangeGradleUserNameValue() {
 		new File("${parentProject.projectDir}/gradle-bad.properties").text = "gradleUserName = dummy"
 
