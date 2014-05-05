@@ -50,7 +50,7 @@ other.
 4. The gradle-${environmentName}.properties file in the project directory.
 if no environment is specified, the plugin will assume an environment name of
 "local".  We strongly recommend adding gradle-local.properties to the .gitignore
-file of the project so that develpers' local configurations don't interfere
+file of the project so that developers' local configurations don't interfere
 with each other.
 
 5. The gradle.properties file in the user's ${gradleUserHomeDir}

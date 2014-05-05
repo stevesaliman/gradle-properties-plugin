@@ -19,6 +19,8 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	def plugin = new PropertiesPlugin()
 	def parentProject = null;
 	def childProject = null;
+	def parentCommandProperties = null;
+	def childCommandProperties = null;
 
 	/**
 	 * Set up the test data.  This calls a helper method to create the projects
@@ -28,6 +30,7 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		createProjects(true)
 		copyFiles()
 	}
+
 	/**
 	 * Set up for each test. This will create a parent project with one child
 	 * project, and it will set the properties that would be set before the plugin
@@ -37,40 +40,42 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	 */
 	public void createProjects(includeProjectProperties) {
 		// Create the parent project.
-		def parentProjectDir = new File("build/test/parentProject")
+		def parentProjectDir = new File('build/test/parentProject')
 		parentProject = ProjectBuilder
 						.builder()
-						.withName("parentProject")
+						.withName('parentProject')
 						.withProjectDir(parentProjectDir)
 						.build();
 		if ( includeProjectProperties ) {
-			parentProject.ext.parentProjectProperty = "ParentProject.parentProjectValue"
+			parentProject.ext.parentProjectProperty = 'ParentProject.parentProjectValue'
 		}
-		parentProject.ext.parentEnvironmentProperty = "ParentProject.parentEnvironmentValue"
-		parentProject.ext.childProjectProperty = "ParentProject.childProjectValue"
-		parentProject.ext.childEnvironmentProperty = "ParentProject.childEnvironmentValue"
-		parentProject.ext.homeProperty = "Home.homeValue"
-		parentProject.ext.userProperty = "Home.userValue"
+		parentProject.ext.parentEnvironmentProperty = 'ParentProject.parentEnvironmentValue'
+		parentProject.ext.childProjectProperty = 'ParentProject.childProjectValue'
+		parentProject.ext.childEnvironmentProperty = 'ParentProject.childEnvironmentValue'
+		parentProject.ext.homeProperty = 'Home.homeValue'
+		parentProject.ext.userProperty = 'Home.userValue'
+		parentCommandProperties = parentProject.gradle.startParameter.projectProperties
 
 		// Create the child project.
-		def childProjectDir = new File("build/test/parentProject/childProject")
+		def childProjectDir = new File('build/test/parentProject/childProject')
 		childProject = ProjectBuilder
 						.builder()
-						.withName("childProject")
+						.withName('childProject')
 						.withParent(parentProject)
 						.withProjectDir(childProjectDir)
 						.build();
 		if ( includeProjectProperties ) {
-			childProject.ext.parentProjectProperty = "ParentProject.parentProjectValue"
+			childProject.ext.parentProjectProperty = 'ParentProject.parentProjectValue'
 		}
-		childProject.ext.parentEnvironmentProperty = "ParentProject.parentEnvironmentValue"
-		childProject.ext.childProjectProperty = "ChildProject.childProjectValue"
-		childProject.ext.childEnvironmentProperty = "ChildProject.childEnvironmentValue"
-		childProject.ext.homeProperty = "Home.homeValue"
-		childProject.ext.userProperty = "Home.userValue"
+		childProject.ext.parentEnvironmentProperty = 'ParentProject.parentEnvironmentValue'
+		childProject.ext.childProjectProperty = 'ChildProject.childProjectValue'
+		childProject.ext.childEnvironmentProperty = 'ChildProject.childEnvironmentValue'
+		childProject.ext.homeProperty = 'Home.homeValue'
+		childProject.ext.userProperty = 'Home.userValue'
+		childCommandProperties = parentProject.gradle.startParameter.projectProperties
 
 		// Add the child to the parent.
-		parentProject.childProjects.put("child", childProject)
+		parentProject.childProjects.put('child', childProject)
 	}
 
 	/**
@@ -112,23 +117,24 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	 * @param setEnvironmentProperties whether or not to set the environment
 	 *        properties
 	 * @param setSystemProperties whether or not to set the system properties
-	 * @param setCommandProperties whether or not to set the command property.
+	 * @param commandProperties a map of properties that should be added to the
+	 *        "command line" for our build.
 	 */
 	public void setNonFileProperties(boolean setEnvironmentProperties,
 	                                 boolean setSystemProperties,
-	                                 boolean setCommandProperties) {
+	                                 Map commandProperties) {
 		if ( setEnvironmentProperties ) {
 			SetEnv.setEnv([ 'ORG_GRADLE_PROJECT_environmentProperty' : 'Environment.environmentValue',
 							'ORG_GRADLE_PROJECT_systemProperty' : 'Environment.systemValue',
 							'ORG_GRADLE_PROJECT_commandProperty' :'Environment.commandValue'])
 			// Make sure the utility worked.
-			assertEquals("Failed to set ORG_GRADLE_PROJECT_environmentProperty",
+			assertEquals('Failed to set ORG_GRADLE_PROJECT_environmentProperty',
 							'Environment.environmentValue',
 							System.getenv('ORG_GRADLE_PROJECT_environmentProperty'))
-			assertEquals("Failed to set ORG_GRADLE_PROJECT_systemProperty",
+			assertEquals('Failed to set ORG_GRADLE_PROJECT_systemProperty',
 							'Environment.systemValue',
 							System.getenv('ORG_GRADLE_PROJECT_systemProperty'))
-			assertEquals("Failed to set ORG_GRADLE_PROJECT_commandProperty",
+			assertEquals('Failed to set ORG_GRADLE_PROJECT_commandProperty',
 							'Environment.commandValue',
 							System.getenv('ORG_GRADLE_PROJECT_commandProperty'))
 		} else {
@@ -136,11 +142,11 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 							'ORG_GRADLE_PROJECT_systemProperty',
 							'ORG_GRADLE_PROJECT_commandProperty'])
 			// Make sure the utility worked.
-			assertNull("Failed to clear ORG_GRADLE_PROJECT_environmentProperty",
+			assertNull('Failed to clear ORG_GRADLE_PROJECT_environmentProperty',
 							System.getenv('ORG_GRADLE_PROJECT_environmentProperty'))
-			assertNull("Failed to clear ORG_GRADLE_PROJECT_systemProperty",
+			assertNull('Failed to clear ORG_GRADLE_PROJECT_systemProperty',
 							System.getenv('ORG_GRADLE_PROJECT_systemProperty'))
-			assertNull("Failed to clear ORG_GRADLE_PROJECT_commandProperty",
+			assertNull('Failed to clear ORG_GRADLE_PROJECT_commandProperty',
 							System.getenv('ORG_GRADLE_PROJECT_commandProperty'))
 
 		}
@@ -151,20 +157,31 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 			System.clearProperty('org.gradle.project.systemProperty')
 			System.clearProperty('org.gradle.project.commandProperty')
 		}
-		if ( setCommandProperties) {
-			def commandProps = parentProject.gradle.startParameter.projectProperties
-			commandProps.commandProperty = "Command.commandValue"
-		}
 
+		// Apply command properties.  This means 2 things:
+		// 1 - Add each property to Gradle's list of command line arguments so that
+		//     the plugin will process them when the plugin is applied.
+		// 2 - Add the property to the project's existing properties since Gradle
+		//     would have already added them to the project before applying the
+		//     plugin.
+		if ( commandProperties != null ) {
+			commandProperties.each { key, value ->
+				parentProject
+				parentCommandProperties[key] = value
+				parentProject.ext[key] = value
+				childCommandProperties[key] = value
+				childProject.ext[key] = value
+			}
+		}
 	}
 
 	/**
 	 * Test the CheckProperty method when the property is missing.
 	 */
 	public void testCheckPropertyPresent() {
-		parentProject.ext.someProperty = "someValue"
+		parentProject.ext.someProperty = 'someValue'
 		// we succeed if we don't get an exception.
-		plugin.checkProperty(parentProject, "someProperty", "someTask")
+		plugin.checkProperty(parentProject, 'someProperty', 'someTask')
 
 	}
 
@@ -174,7 +191,7 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	public void testCheckPropertyMissing() {
 		// we succeed if we don't get an exception.
 		shouldFail(MissingPropertyException) {
-			plugin.checkProperty(parentProject, "someProperty", "someTask")
+			plugin.checkProperty(parentProject, 'someProperty', 'someTask')
 		}
 
 	}
@@ -187,16 +204,21 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	public void testApplyCommandProperty() {
 		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user"
 		// command line
-		setNonFileProperties(true, true, true)
-		parentProject.ext.gradleUserName = "user"
-		parentProject.apply plugin: 'properties'
-		assertEquals("local", parentProject.environmentName)
+		def commandArgs = [
+						commandProperty: 'Command.commandValue',
+						gradleUserName: 'user'
+		]
+		setNonFileProperties(true, true, commandArgs)
 
-		assertEquals("Command.commandValue", parentProject.commandProperty)
-		def testFilter = parentProject.filterTokens["commandProperty"]
-		assertEquals("Command.commandValue", testFilter)
-		testFilter = parentProject.filterTokens["command.property"]
-		assertEquals("Command.commandValue", testFilter)
+		parentProject.apply plugin: 'properties'
+		def tokens = parentProject.filterTokens
+		assertEquals('local', parentProject.environmentName)
+
+		assertEquals('Command.commandValue', parentProject.commandProperty)
+		def testFilter = tokens['commandProperty']
+		assertEquals('Command.commandValue', testFilter)
+		testFilter = tokens['command.property']
+		assertEquals('Command.commandValue', testFilter)
 	}
 
 	/**
@@ -207,16 +229,21 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	public void testApplyUserProperty() {
 		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user"
 		// command line
-		setNonFileProperties(true, true, true)
-		parentProject.ext.gradleUserName = "user"
-		parentProject.apply plugin: 'properties'
-		assertEquals("local", parentProject.environmentName)
+		def commandArgs = [
+						commandProperty: 'Command.commandValue',
+						gradleUserName: 'user'
+		]
+		setNonFileProperties(true, true, commandArgs)
 
-		assertEquals("User.userValue", parentProject.userProperty)
-		def testFilter = parentProject.filterTokens["userProperty"]
-		assertEquals("User.userValue", testFilter)
-		testFilter = parentProject.filterTokens["user.property"]
-		assertEquals("User.userValue", testFilter)
+		parentProject.apply plugin: 'properties'
+		def tokens = parentProject.filterTokens
+		assertEquals('local', parentProject.environmentName)
+		assertEquals('User.userValue', parentProject.userProperty)
+
+		def testFilter = tokens['userProperty']
+		assertEquals('User.userValue', testFilter)
+		testFilter = tokens['user.property']
+		assertEquals('User.userValue', testFilter)
 	}
 
 	/**
@@ -225,15 +252,20 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	 */
 	public void testApplyUserPropertyNoUser() {
 		// simulate a "-PcommandProperty=Command.commandValue" command line
-		setNonFileProperties(true, true, true)
-		parentProject.apply plugin: 'properties'
-		assertEquals("local", parentProject.environmentName)
+		def commandArgs = [
+						commandProperty: 'Command.commandValue'
+		]
+		setNonFileProperties(true, true, commandArgs)
 
-		assertEquals("Home.userValue", parentProject.userProperty)
-		def testFilter = parentProject.filterTokens["userProperty"]
-		assertEquals("Home.userValue", testFilter)
-		testFilter = parentProject.filterTokens["user.property"]
-		assertEquals("Home.userValue", testFilter)
+		parentProject.apply plugin: 'properties'
+		def tokens = parentProject.filterTokens
+
+		assertEquals('local', parentProject.environmentName)
+		assertEquals('Home.userValue', parentProject.userProperty)
+		def testFilter = tokens['userProperty']
+		assertEquals('Home.userValue', testFilter)
+		testFilter = tokens['user.property']
+		assertEquals('Home.userValue', testFilter)
 	}
 
 	/**
@@ -243,16 +275,22 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	public void testApplyHomeProperty() {
 		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user"
 		// command line
-		setNonFileProperties(true, true, true)
-		parentProject.ext.gradleUserName = "user"
-		parentProject.apply plugin: 'properties'
-		assertEquals("local", parentProject.environmentName)
+		def commandArgs = [
+						commandProperty: 'Command.commandValue',
+						gradleUserName: 'user'
+		]
+		setNonFileProperties(true, true, commandArgs)
 
-		assertEquals("Home.homeValue", parentProject.homeProperty)
-		def testFilter = parentProject.filterTokens["homeProperty"]
-		assertEquals("Home.homeValue", testFilter)
-		testFilter = parentProject.filterTokens["home.property"]
-		assertEquals("Home.homeValue", testFilter)
+		parentProject.apply plugin: 'properties'
+		def tokens = parentProject.filterTokens
+
+		assertEquals('local', parentProject.environmentName)
+
+		assertEquals('Home.homeValue', parentProject.homeProperty)
+		def testFilter = tokens['homeProperty']
+		assertEquals('Home.homeValue', testFilter)
+		testFilter = tokens['home.property']
+		assertEquals('Home.homeValue', testFilter)
 	}
 
 	/**
@@ -264,21 +302,27 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	public void testApplyUseDefaultFile() {
 		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user"
 		// command line
-		setNonFileProperties(true, true, true)
-		parentProject.ext.gradleUserName =  "user"
-		parentProject.apply plugin: 'properties'
-		assertEquals("local", parentProject.environmentName)
+		def commandArgs = [
+						commandProperty: 'Command.commandValue',
+						gradleUserName: 'user'
+		]
+		setNonFileProperties(true, true, commandArgs)
 
-		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.childEnvironmentProperty)
-		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.parentEnvironmentProperty)
-		def testFilter = parentProject.filterTokens["childEnvironmentProperty"]
-		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", testFilter)
-		testFilter = parentProject.filterTokens["parentEnvironmentProperty"]
-		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", testFilter)
-		testFilter = parentProject.filterTokens["child.environment.property"]
-		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", testFilter)
-		testFilter = parentProject.filterTokens["parent.environment.property"]
-		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", testFilter)
+		parentProject.apply plugin: 'properties'
+		def tokens = parentProject.filterTokens
+		assertEquals('local' , parentProject.environmentName)
+		assertEquals('user', parentProject.gradleUserName)
+
+		assertEquals('ParentEnvironmentLocal.childEnvironmentValue', parentProject.childEnvironmentProperty)
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
+		def testFilter = tokens['childEnvironmentProperty']
+		assertEquals('ParentEnvironmentLocal.childEnvironmentValue', testFilter)
+		testFilter = tokens['parentEnvironmentProperty']
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', testFilter)
+		testFilter = tokens['child.environment.property']
+		assertEquals('ParentEnvironmentLocal.childEnvironmentValue', testFilter)
+		testFilter = tokens['parent.environment.property']
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', testFilter)
 	}
 
 	/**
@@ -289,23 +333,28 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	public void testApplyUseAlternateFile() {
 		// simulate a "-PcommandProperty=Command.commandValue
 		// -PenvironmentName=test -PgradleUserName=user" command line
-		setNonFileProperties(true, true, true)
-		// simulate the -PenvironmentName=test and -PgradleUserName=user option
-		parentProject.ext.gradleUserName =  'user'
-		parentProject.ext.environmentName = 'test'
-		parentProject.apply plugin: 'properties'
-		assertEquals("test", parentProject.environmentName)
+		def commandArgs = [
+						commandProperty: 'Command.commandValue',
+						environmentName: 'test',
+						gradleUserName: 'user',
+		]
+		setNonFileProperties(true, true, commandArgs)
 
-		assertEquals("ParentEnvironmentTest.childEnvironmentValue", parentProject.childEnvironmentProperty)
-		assertEquals("ParentEnvironmentTest.parentEnvironmentValue", parentProject.parentEnvironmentProperty)
-		def testFilter = parentProject.filterTokens["childEnvironmentProperty"]
-		assertEquals("ParentEnvironmentTest.childEnvironmentValue", testFilter)
-		testFilter = parentProject.filterTokens["parentEnvironmentProperty"]
-		assertEquals("ParentEnvironmentTest.parentEnvironmentValue", testFilter)
-		testFilter = parentProject.filterTokens["child.environment.property"]
-		assertEquals("ParentEnvironmentTest.childEnvironmentValue", testFilter)
-		testFilter = parentProject.filterTokens["parent.environment.property"]
-		assertEquals("ParentEnvironmentTest.parentEnvironmentValue", testFilter)
+		parentProject.apply plugin: 'properties'
+		def tokens = parentProject.filterTokens
+		assertEquals('test', parentProject.environmentName)
+		assertEquals('user', parentProject.gradleUserName)
+
+		assertEquals('ParentEnvironmentTest.childEnvironmentValue', parentProject.childEnvironmentProperty)
+		assertEquals('ParentEnvironmentTest.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
+		def testFilter = tokens['childEnvironmentProperty']
+		assertEquals('ParentEnvironmentTest.childEnvironmentValue', testFilter)
+		testFilter = tokens['parentEnvironmentProperty']
+		assertEquals('ParentEnvironmentTest.parentEnvironmentValue', testFilter)
+		testFilter = tokens['child.environment.property']
+		assertEquals('ParentEnvironmentTest.childEnvironmentValue', testFilter)
+		testFilter = tokens['parent.environment.property']
+		assertEquals('ParentEnvironmentTest.parentEnvironmentValue', testFilter)
 	}
 
 	/**
@@ -316,21 +365,27 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	public void testApplyProjectProperties() {
 		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user"
 		// command line
-		setNonFileProperties(true, true, true)
-		parentProject.ext.gradleUserName =  "user"
-		parentProject.apply plugin: 'properties'
-		assertEquals("local", parentProject.environmentName)
+		def commandArgs = [
+						commandProperty: 'Command.commandValue',
+						gradleUserName: 'user'
+		]
+		setNonFileProperties(true, true, commandArgs)
 
-		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.childProjectProperty)
-		assertEquals("ParentProject.parentProjectValue", parentProject.parentProjectProperty)
-		def testFilter = parentProject.filterTokens["childProjectProperty"]
-		assertEquals("ParentEnvironmentLocal.childProjectValue", testFilter)
-		testFilter = parentProject.filterTokens["parentProjectProperty"]
-		assertEquals("ParentProject.parentProjectValue", testFilter)
-		testFilter = parentProject.filterTokens["child.project.property"]
-		assertEquals("ParentEnvironmentLocal.childProjectValue", testFilter)
-		testFilter = parentProject.filterTokens["parent.project.property"]
-		assertEquals("ParentProject.parentProjectValue", testFilter)
+		parentProject.apply plugin: 'properties'
+		def tokens = parentProject.filterTokens
+		assertEquals('local', parentProject.environmentName)
+		assertEquals('user', parentProject.gradleUserName)
+
+		assertEquals('ParentEnvironmentLocal.childProjectValue', parentProject.childProjectProperty)
+		assertEquals('ParentProject.parentProjectValue', parentProject.parentProjectProperty)
+		def testFilter = tokens['childProjectProperty']
+		assertEquals('ParentEnvironmentLocal.childProjectValue', testFilter)
+		testFilter = tokens['parentProjectProperty']
+		assertEquals('ParentProject.parentProjectValue', testFilter)
+		testFilter = tokens['child.project.property']
+		assertEquals('ParentEnvironmentLocal.childProjectValue', testFilter)
+		testFilter = tokens['parent.project.property']
+		assertEquals('ParentProject.parentProjectValue', testFilter)
 	}
 
 	// This set of tests tests what happens when certain files are missing.
@@ -342,43 +397,52 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	 * processed.
 	 */
 	public void testApplyMissingUnspecifiedUserFile() {
-		// simulate a "-PcommandProperty=Command.commandValue" command line
-		setNonFileProperties(true, true, true)
 		def propFile = new File("${parentProject.gradle.gradleUserHomeDir}/gradle-user.properties")
 		propFile.delete()
-		assertFalse("Failed to delete user file", propFile.exists())
+		assertFalse('Failed to delete user file', propFile.exists())
+
+		// simulate a "-PcommandProperty=Command.commandValue" command line
+		def commandArgs = [
+						commandProperty: 'Command.commandValue'
+		]
+		setNonFileProperties(true, true, commandArgs)
 
 		parentProject.apply plugin: 'properties'
-		assertEquals("ParentProject.parentProjectValue", parentProject.parentProjectProperty)
-		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.parentEnvironmentProperty)
-		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.childProjectProperty)
-		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.childEnvironmentProperty)
-		assertEquals("Home.homeValue", parentProject.homeProperty)
-		assertEquals("Home.userValue", parentProject.userProperty)
-		assertEquals("Environment.environmentValue", parentProject.environmentProperty)
-		assertEquals("System.systemValue", parentProject.systemProperty)
-		assertEquals("Command.commandValue", parentProject.commandProperty)
-		assertEquals(18, parentProject.filterTokens.size())
+		def tokens = parentProject.filterTokens
+		assertEquals('local', parentProject.environmentName)
+		assertFalse(parentProject.hasProperty('gradleUserName'))
+
+		assertEquals('ParentProject.parentProjectValue', parentProject.parentProjectProperty)
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
+		assertEquals('ParentEnvironmentLocal.childProjectValue', parentProject.childProjectProperty)
+		assertEquals('ParentEnvironmentLocal.childEnvironmentValue', parentProject.childEnvironmentProperty)
+		assertEquals('Home.homeValue', parentProject.homeProperty)
+		assertEquals('Home.userValue', parentProject.userProperty)
+		assertEquals('Environment.environmentValue', parentProject.environmentProperty)
+		assertEquals('System.systemValue', parentProject.systemProperty)
+		assertEquals('Command.commandValue', parentProject.commandProperty)
+
+		assertEquals(18, tokens.size())
 		// camel case notation
-		assertEquals("ParentProject.parentProjectValue", parentProject.filterTokens["parentProjectProperty"])
-		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.filterTokens["parentEnvironmentProperty"])
-		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.filterTokens["childProjectProperty"])
-		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.filterTokens["childEnvironmentProperty"])
-		assertEquals("Home.homeValue", parentProject.filterTokens["homeProperty"])
-		assertEquals("Home.userValue", parentProject.filterTokens["userProperty"])
-		assertEquals("Environment.environmentValue", parentProject.filterTokens["environmentProperty"])
-		assertEquals("System.systemValue", parentProject.filterTokens["systemProperty"])
-		assertEquals("Command.commandValue", parentProject.filterTokens["commandProperty"])
+		assertEquals('ParentProject.parentProjectValue', tokens['parentProjectProperty'])
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', tokens['parentEnvironmentProperty'])
+		assertEquals('ParentEnvironmentLocal.childProjectValue', tokens['childProjectProperty'])
+		assertEquals('ParentEnvironmentLocal.childEnvironmentValue', tokens['childEnvironmentProperty'])
+		assertEquals('Home.homeValue', tokens['homeProperty'])
+		assertEquals('Home.userValue', tokens['userProperty'])
+		assertEquals('Environment.environmentValue', tokens['environmentProperty'])
+		assertEquals('System.systemValue', tokens['systemProperty'])
+		assertEquals('Command.commandValue', tokens['commandProperty'])
 		// dot notation
-		assertEquals("ParentProject.parentProjectValue", parentProject.filterTokens["parent.project.property"])
-		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.filterTokens["parent.environment.property"])
-		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.filterTokens["child.project.property"])
-		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.filterTokens["child.environment.property"])
-		assertEquals("Home.homeValue", parentProject.filterTokens["home.property"])
-		assertEquals("Home.userValue", parentProject.filterTokens["user.property"])
-		assertEquals("Environment.environmentValue", parentProject.filterTokens["environment.property"])
-		assertEquals("System.systemValue", parentProject.filterTokens["system.property"])
-		assertEquals("Command.commandValue", parentProject.filterTokens["command.property"])
+		assertEquals('ParentProject.parentProjectValue', tokens['parent.project.property'])
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', tokens['parent.environment.property'])
+		assertEquals('ParentEnvironmentLocal.childProjectValue', tokens['child.project.property'])
+		assertEquals('ParentEnvironmentLocal.childEnvironmentValue', tokens['child.environment.property'])
+		assertEquals('Home.homeValue', tokens['home.property'])
+		assertEquals('Home.userValue', tokens['user.property'])
+		assertEquals('Environment.environmentValue', tokens['environment.property'])
+		assertEquals('System.systemValue', tokens['system.property'])
+		assertEquals('Command.commandValue', tokens['command.property'])
 	}
 
 	/**
@@ -388,8 +452,11 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	public void testApplyMissingSpecifiedUserFile() {
 		// simulate a "-PcommandProperty=Command.commandValue
 		// -PgradleUserName=dummy" command line
-		setNonFileProperties(true, true, true)
-		parentProject.ext.gradleUserName = "dummy"
+		def commandArgs = [
+						commandProperty: 'Command.commandValue',
+						gradleUserName: 'dummy'
+		]
+		setNonFileProperties(true, true, commandArgs)
 
 		try {
 			parentProject.apply plugin: 'properties'
@@ -404,50 +471,61 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	 * error.
 	 */
 	public void testApplyMissingHomeFile() {
+		// delete the home file
+		def propFile = new File("${parentProject.gradle.gradleUserHomeDir}/gradle.properties")
+		propFile.delete()
+		assertFalse('Failed to delete home file', propFile.exists())
+
 		// Fix the properties setUp set when it assumed the home file existed.
-		parentProject.ext.userProperty = "ParentProject.userValue"
-		parentProject.ext.homeProperty = "ParentProject.homeValue"
+		parentProject.ext.userProperty = 'ParentProject.userValue'
+		parentProject.ext.homeProperty = 'ParentProject.homeValue'
 
 		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user"
 		// command line
-		setNonFileProperties(true, true, true)
-		parentProject.ext.gradleUserName =  "user"
-
-		def propFile = new File("${parentProject.gradle.gradleUserHomeDir}/gradle.properties")
-		propFile.delete()
-		assertFalse("Failed to delete home file", propFile.exists())
+		def commandArgs = [
+						commandProperty: 'Command.commandValue',
+						gradleUserName: 'user'
+		]
+		setNonFileProperties(true, true, commandArgs)
 
 		parentProject.apply plugin: 'properties'
-		assertEquals("ParentProject.parentProjectValue", parentProject.parentProjectProperty)
-		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.parentEnvironmentProperty)
-		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.childProjectProperty)
-		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.childEnvironmentProperty)
-		assertEquals("ParentEnvironmentLocal.homeValue", parentProject.homeProperty)
-		assertEquals("User.userValue", parentProject.userProperty)
-		assertEquals("Environment.environmentValue", parentProject.environmentProperty)
-		assertEquals("System.systemValue", parentProject.systemProperty)
-		assertEquals("Command.commandValue", parentProject.commandProperty)
-		assertEquals(18, parentProject.filterTokens.size())
+		def tokens = parentProject.filterTokens
+		assertEquals('local', parentProject.environmentName)
+		assertEquals('user', parentProject.gradleUserName)
+
+		assertEquals('ParentProject.parentProjectValue', parentProject.parentProjectProperty)
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
+		assertEquals('ParentEnvironmentLocal.childProjectValue', parentProject.childProjectProperty)
+		assertEquals('ParentEnvironmentLocal.childEnvironmentValue', parentProject.childEnvironmentProperty)
+		assertEquals('ParentEnvironmentLocal.homeValue', parentProject.homeProperty)
+		assertEquals('User.userValue', parentProject.userProperty)
+		assertEquals('Environment.environmentValue', parentProject.environmentProperty)
+		assertEquals('System.systemValue', parentProject.systemProperty)
+		assertEquals('Command.commandValue', parentProject.commandProperty)
+
+		assertEquals(20, tokens.size())
 		// camel case notation
-		assertEquals("ParentProject.parentProjectValue", parentProject.filterTokens["parentProjectProperty"])
-		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.filterTokens["parentEnvironmentProperty"])
-		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.filterTokens["childProjectProperty"])
-		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.filterTokens["childEnvironmentProperty"])
-		assertEquals("ParentEnvironmentLocal.homeValue", parentProject.filterTokens["homeProperty"])
-		assertEquals("User.userValue", parentProject.filterTokens["userProperty"])
-		assertEquals("Environment.environmentValue", parentProject.filterTokens["environmentProperty"])
-		assertEquals("System.systemValue", parentProject.filterTokens["systemProperty"])
-		assertEquals("Command.commandValue", parentProject.filterTokens["commandProperty"])
+		assertEquals('user', tokens['gradleUserName'])
+		assertEquals('ParentProject.parentProjectValue', tokens['parentProjectProperty'])
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', tokens['parentEnvironmentProperty'])
+		assertEquals('ParentEnvironmentLocal.childProjectValue', tokens['childProjectProperty'])
+		assertEquals('ParentEnvironmentLocal.childEnvironmentValue', tokens['childEnvironmentProperty'])
+		assertEquals('ParentEnvironmentLocal.homeValue', tokens['homeProperty'])
+		assertEquals('User.userValue', tokens['userProperty'])
+		assertEquals('Environment.environmentValue', tokens['environmentProperty'])
+		assertEquals('System.systemValue', tokens['systemProperty'])
+		assertEquals('Command.commandValue', tokens['commandProperty'])
 		// dot notation
-		assertEquals("ParentProject.parentProjectValue", parentProject.filterTokens["parent.project.property"])
-		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.filterTokens["parent.environment.property"])
-		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.filterTokens["child.project.property"])
-		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.filterTokens["child.environment.property"])
-		assertEquals("ParentEnvironmentLocal.homeValue", parentProject.filterTokens["home.property"])
-		assertEquals("User.userValue", parentProject.filterTokens["user.property"])
-		assertEquals("Environment.environmentValue", parentProject.filterTokens["environment.property"])
-		assertEquals("System.systemValue", parentProject.filterTokens["system.property"])
-		assertEquals("Command.commandValue", parentProject.filterTokens["command.property"])
+		assertEquals('user', tokens['gradle.user.name'])
+		assertEquals('ParentProject.parentProjectValue', tokens['parent.project.property'])
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', tokens['parent.environment.property'])
+		assertEquals('ParentEnvironmentLocal.childProjectValue', tokens['child.project.property'])
+		assertEquals('ParentEnvironmentLocal.childEnvironmentValue', tokens['child.environment.property'])
+		assertEquals('ParentEnvironmentLocal.homeValue', tokens['home.property'])
+		assertEquals('User.userValue', tokens['user.property'])
+		assertEquals('Environment.environmentValue', tokens['environment.property'])
+		assertEquals('System.systemValue', tokens['system.property'])
+		assertEquals('Command.commandValue', tokens['command.property'])
 	}
 
 	/**
@@ -455,46 +533,57 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	 * default "local" file.  This should not be an error.
 	 */
 	public void testApplyMissingUnspecifiedEnvFile() {
-		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user"
-		// command line
-		setNonFileProperties(true, true, true)
-		parentProject.ext.gradleUserName = "user"
-
+		// delete the local file.
 		def propFile = new File("${parentProject.projectDir}/gradle-local.properties")
 		propFile.delete()
-		assertFalse("Failed to delete local file", propFile.exists())
+		assertFalse('Failed to delete local file', propFile.exists())
+
+		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user"
+		// command line
+		def commandArgs = [
+						commandProperty: 'Command.commandValue',
+						gradleUserName: 'user'
+		]
+		setNonFileProperties(true, true, commandArgs)
 
 		parentProject.apply plugin: 'properties'
-		assertEquals("ParentProject.parentProjectValue", parentProject.parentProjectProperty)
-		assertEquals("ParentProject.parentEnvironmentValue", parentProject.parentEnvironmentProperty)
-		assertEquals("ParentProject.childProjectValue", parentProject.childProjectProperty)
-		assertEquals("ParentProject.childEnvironmentValue", parentProject.childEnvironmentProperty)
-		assertEquals("Home.homeValue", parentProject.homeProperty)
-		assertEquals("User.userValue", parentProject.userProperty)
-		assertEquals("Environment.environmentValue", parentProject.environmentProperty)
-		assertEquals("System.systemValue", parentProject.systemProperty)
-		assertEquals("Command.commandValue", parentProject.commandProperty)
-		assertEquals(18, parentProject.filterTokens.size())
+		def tokens = parentProject.filterTokens
+		assertEquals('local', parentProject.environmentName)
+		assertEquals('user', parentProject.gradleUserName)
+
+		assertEquals('ParentProject.parentProjectValue', parentProject.parentProjectProperty)
+		assertEquals('ParentProject.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
+		assertEquals('ParentProject.childProjectValue', parentProject.childProjectProperty)
+		assertEquals('ParentProject.childEnvironmentValue', parentProject.childEnvironmentProperty)
+		assertEquals('Home.homeValue', parentProject.homeProperty)
+		assertEquals('User.userValue', parentProject.userProperty)
+		assertEquals('Environment.environmentValue', parentProject.environmentProperty)
+		assertEquals('System.systemValue', parentProject.systemProperty)
+		assertEquals('Command.commandValue', parentProject.commandProperty)
+
+		assertEquals(20, tokens.size())
 		// camel case notation
-		assertEquals("ParentProject.parentProjectValue", parentProject.filterTokens["parentProjectProperty"])
-		assertEquals("ParentProject.parentEnvironmentValue", parentProject.filterTokens["parentEnvironmentProperty"])
-		assertEquals("ParentProject.childProjectValue", parentProject.filterTokens["childProjectProperty"])
-		assertEquals("ParentProject.childEnvironmentValue", parentProject.filterTokens["childEnvironmentProperty"])
-		assertEquals("Home.homeValue", parentProject.filterTokens["homeProperty"])
-		assertEquals("User.userValue", parentProject.filterTokens["userProperty"])
-		assertEquals("Environment.environmentValue", parentProject.filterTokens["environmentProperty"])
-		assertEquals("System.systemValue", parentProject.filterTokens["systemProperty"])
-		assertEquals("Command.commandValue", parentProject.filterTokens["commandProperty"])
+		assertEquals('user', tokens['gradleUserName'])
+		assertEquals('ParentProject.parentProjectValue', tokens['parentProjectProperty'])
+		assertEquals('ParentProject.parentEnvironmentValue', tokens['parentEnvironmentProperty'])
+		assertEquals('ParentProject.childProjectValue', tokens['childProjectProperty'])
+		assertEquals('ParentProject.childEnvironmentValue', tokens['childEnvironmentProperty'])
+		assertEquals('Home.homeValue', tokens['homeProperty'])
+		assertEquals('User.userValue', tokens['userProperty'])
+		assertEquals('Environment.environmentValue', tokens['environmentProperty'])
+		assertEquals('System.systemValue', tokens['systemProperty'])
+		assertEquals('Command.commandValue', tokens['commandProperty'])
 		// dot notation
-		assertEquals("ParentProject.parentProjectValue", parentProject.filterTokens["parent.project.property"])
-		assertEquals("ParentProject.parentEnvironmentValue", parentProject.filterTokens["parent.environment.property"])
-		assertEquals("ParentProject.childProjectValue", parentProject.filterTokens["child.project.property"])
-		assertEquals("ParentProject.childEnvironmentValue", parentProject.filterTokens["child.environment.property"])
-		assertEquals("Home.homeValue", parentProject.filterTokens["home.property"])
-		assertEquals("User.userValue", parentProject.filterTokens["user.property"])
-		assertEquals("Environment.environmentValue", parentProject.filterTokens["environment.property"])
-		assertEquals("System.systemValue", parentProject.filterTokens["system.property"])
-		assertEquals("Command.commandValue", parentProject.filterTokens["command.property"])
+		assertEquals('user', tokens['gradle.user.name'])
+		assertEquals('ParentProject.parentProjectValue', tokens['parent.project.property'])
+		assertEquals('ParentProject.parentEnvironmentValue', tokens['parent.environment.property'])
+		assertEquals('ParentProject.childProjectValue', tokens['child.project.property'])
+		assertEquals('ParentProject.childEnvironmentValue', tokens['child.environment.property'])
+		assertEquals('Home.homeValue', tokens['home.property'])
+		assertEquals('User.userValue', tokens['user.property'])
+		assertEquals('Environment.environmentValue', tokens['environment.property'])
+		assertEquals('System.systemValue', tokens['system.property'])
+		assertEquals('Command.commandValue', tokens['command.property'])
 
 	}
 
@@ -505,9 +594,13 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	public void testApplyMissingSpecifiedEnvFile() {
 		// simulate a "-PcommandProperty=Command.commandValue
 		// -PenvironmentName=dummy -PgradleUserName=user" command line
-		setNonFileProperties(true, true, true)
-		parentProject.ext.gradleUserName = "user"
-		parentProject.ext.environmentName = "dummy"
+		def commandArgs = [
+						commandProperty: 'Command.commandValue',
+						environmentName: 'dummy',
+						gradleUserName: 'user'
+		]
+		setNonFileProperties(true, true, commandArgs)
+
 		try {
 			parentProject.apply plugin: 'properties'
 			fail("We should have gotten an error when we're missing an environment file.")
@@ -520,223 +613,58 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	 * Test what happens when we have no project property file.  This is no error.
 	 */
 	public void testApplyMissingProjectFile() {
+		def propFile = new File("${parentProject.projectDir}/gradle.properties")
+		propFile.delete()
+		assertFalse('Failed to delete project file', propFile.exists())
+
 		// we can't unset a property once it has been set, so redo the setup,
 		// skipping the project property since Gradle would not have set it when
 		// the project file is missing.
 		createProjects(false)
-		assertFalse("We shouldn't have a parent project property", parentProject.hasProperty("parentProjectProperty"))
+		assertFalse("We shouldn't have a parent project property", parentProject.hasProperty('parentProjectProperty'))
+
 		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user"
 		// command line
-		setNonFileProperties(true, true, true)
-		parentProject.ext.gradleUserName = "user"
-
-		def propFile = new File("${parentProject.projectDir}/gradle.properties")
-		propFile.delete()
-		assertFalse("Failed to delete project file", propFile.exists())
+		def commandArgs = [
+						commandProperty: 'Command.commandValue',
+						gradleUserName: 'user'
+		]
+		setNonFileProperties(true, true, commandArgs)
 
 		parentProject.apply plugin: 'properties'
-		assertFalse("We shouldn't have a parent project property", parentProject.hasProperty("parentProjectProperty"))
-		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.parentEnvironmentProperty)
-		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.childProjectProperty)
-		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.childEnvironmentProperty)
-		assertEquals("Home.homeValue", parentProject.homeProperty)
-		assertEquals("User.userValue", parentProject.userProperty)
-		assertEquals("Environment.environmentValue", parentProject.environmentProperty)
-		assertEquals("System.systemValue", parentProject.systemProperty)
-		assertEquals("Command.commandValue", parentProject.commandProperty)
-		assertEquals(16, parentProject.filterTokens.size())
-		// camel case notation
-		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.filterTokens["parentEnvironmentProperty"])
-		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.filterTokens["childProjectProperty"])
-		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.filterTokens["childEnvironmentProperty"])
-		assertEquals("Home.homeValue", parentProject.filterTokens["homeProperty"])
-		assertEquals("User.userValue", parentProject.filterTokens["userProperty"])
-		assertEquals("Environment.environmentValue", parentProject.filterTokens["environmentProperty"])
-		assertEquals("System.systemValue", parentProject.filterTokens["systemProperty"])
-		assertEquals("Command.commandValue", parentProject.filterTokens["commandProperty"])
-		// dot notation
-		assertEquals("ParentEnvironmentLocal.parentEnvironmentValue", parentProject.filterTokens["parent.environment.property"])
-		assertEquals("ParentEnvironmentLocal.childProjectValue", parentProject.filterTokens["child.project.property"])
-		assertEquals("ParentEnvironmentLocal.childEnvironmentValue", parentProject.filterTokens["child.environment.property"])
-		assertEquals("Home.homeValue", parentProject.filterTokens["home.property"])
-		assertEquals("User.userValue", parentProject.filterTokens["user.property"])
-		assertEquals("Environment.environmentValue", parentProject.filterTokens["environment.property"])
-		assertEquals("System.systemValue", parentProject.filterTokens["system.property"])
-		assertEquals("Command.commandValue", parentProject.filterTokens["command.property"])
-	}
+		def tokens = parentProject.filterTokens
+		assertEquals('local', parentProject.environmentName)
+		assertEquals('user', parentProject.gradleUserName)
 
-	public void testChangeEnvironmentNameValue() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "environmentName = dummy"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.environmentName = 'bad'
-
-		shouldFail(GradleException) {
-			parentProject.apply plugin: 'properties'
-		}
-	}
-
-	public void testChangeEnvironmentNameValueWithoutEffect() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "environmentName = dummy"
-
-		setNonFileProperties(true, true, true)
-		parentProject.gradle.startParameter.projectProperties.environmentName = 'bad'
-		// As Gradle is not "booted", the start parameter is not
-		// transferred to a project property, so we do it manually here
-		parentProject.ext.environmentName = 'bad'
-		parentProject.apply plugin: 'properties'
-		assertEquals('bad', parentProject.environmentName)
-	}
-
-	public void testChangeGradleUserNameValue() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "gradleUserName = dummy"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.environmentName = 'bad'
-		parentProject.ext.gradleUserName = 'user'
-
-		shouldFail(GradleException) {
-			parentProject.apply plugin: 'properties'
-		}
-	}
-
-	public void testSetGradleUserNameValue() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "gradleUserName = dummy"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.environmentName = 'bad'
-
-		shouldFail(GradleException) {
-			parentProject.apply plugin: 'properties'
-		}
-	}
-
-	public void testReSetEnvironmentNameValue() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "environmentName = bad"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.environmentName = 'bad'
-		parentProject.apply plugin: 'properties'
-	}
-
-	public void testChangePropertiesPluginEnvironmentNameProperty() {
-		setNonFileProperties(true, true, true)
-		parentProject.ext.propertiesPluginEnvironmentNameProperty =  'dummyEnvironmentName'
-		parentProject.apply plugin: 'properties'
-
-		assertFalse(parentProject.hasProperty('environmentName'))
-		assertTrue(parentProject.hasProperty('dummyEnvironmentName'))
-		assertEquals('local', parentProject.dummyEnvironmentName)
-		assertTrue(parentProject.hasProperty('parentEnvironmentProperty'))
+		assertFalse("We shouldn't have a parent project property", parentProject.hasProperty('parentProjectProperty'))
 		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
-		assertFalse('ParentEnvironmentTest.parentEnvironmentValue'.equals(parentProject.parentEnvironmentProperty))
-	}
-
-	public void testSetPropertiesPluginEnvironmentNamePropertyValue() {
-		setNonFileProperties(true, true, true)
-		parentProject.ext.propertiesPluginEnvironmentNameProperty =  'dummyEnvironmentName'
-		parentProject.ext.dummyEnvironmentName =  'test'
-		parentProject.apply plugin: 'properties'
-
-		assertFalse(parentProject.hasProperty('environmentName'))
-		assertTrue(parentProject.hasProperty('dummyEnvironmentName'))
-		assertEquals('test', parentProject.dummyEnvironmentName)
-		assertTrue(parentProject.hasProperty('parentEnvironmentProperty'))
-		assertEquals('ParentEnvironmentTest.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
-		assertFalse('ParentEnvironmentLocal.parentEnvironmentValue'.equals(parentProject.parentEnvironmentProperty))
-	}
-
-	public void testChangePropertiesPluginGradleUserNameProperty() {
-		setNonFileProperties(true, true, true)
-		parentProject.ext.propertiesPluginGradleUserNameProperty =  'dummyGradleUserName'
-		parentProject.apply plugin: 'properties'
-
-		assertFalse('User.userValue'.equals(parentProject.userProperty))
-	}
-
-	public void testSetPropertiesPluginGradleUserNamePropertyValue() {
-		setNonFileProperties(true, true, true)
-		parentProject.ext.propertiesPluginGradleUserNameProperty =  'dummyGradleUserName'
-		parentProject.ext.dummyGradleUserName =  'user'
-		parentProject.apply plugin: 'properties'
-
-		assertEquals('user', parentProject.dummyGradleUserName)
-		assertTrue(parentProject.hasProperty('userProperty'))
+		assertEquals('ParentEnvironmentLocal.childProjectValue', parentProject.childProjectProperty)
+		assertEquals('ParentEnvironmentLocal.childEnvironmentValue', parentProject.childEnvironmentProperty)
+		assertEquals('Home.homeValue', parentProject.homeProperty)
 		assertEquals('User.userValue', parentProject.userProperty)
-	}
-
-	public void testChangePropertiesPluginGradleUserNamePropertyValueWithMissingFile() {
-		setNonFileProperties(true, true, true)
-		parentProject.ext.propertiesPluginGradleUserNameProperty =  'dummyGradleUserName'
-		parentProject.ext.dummyGradleUserName =  'dummy'
-
-		shouldFail(FileNotFoundException) {
-			parentProject.apply plugin: 'properties'
-		}
-	}
-
-	public void testChangePropertiesPluginEnvironmentNamePropertyValue() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "propertiesPluginEnvironmentNameProperty = dummy"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.environmentName = 'bad'
-
-		shouldFail(GradleException) {
-			parentProject.apply plugin: 'properties'
-		}
-	}
-
-	public void testChangePropertiesPluginEnvironmentNamePropertyValueValue() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "dummyEnvironmentName = dummy"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.propertiesPluginEnvironmentNameProperty = 'dummyEnvironmentName'
-		parentProject.ext.dummyEnvironmentName = 'bad'
-
-		shouldFail(GradleException) {
-			parentProject.apply plugin: 'properties'
-		}
-	}
-
-	public void testChangeEnvironmentNameValueWithChangedPropertiesPluginEnvironmentNameProperty() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "environmentName = dummy"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.propertiesPluginEnvironmentNameProperty = 'dummyEnvironmentName'
-		parentProject.ext.dummyEnvironmentName = 'bad'
-		parentProject.apply plugin: 'properties'
-	}
-
-	public void testChangePropertiesPluginGradleUserNamePropertyValue() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "propertiesPluginGradleUserNameProperty = dummy"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.environmentName = 'bad'
-
-		shouldFail(GradleException) {
-			parentProject.apply plugin: 'properties'
-		}
-	}
-
-	public void testChangePropertiesPluginGradleUserNamePropertyValueValue() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "dummyGradleUserName = dummy"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.propertiesPluginGradleUserNameProperty = 'dummyGradleUserName'
-		parentProject.ext.environmentName = 'bad'
-		parentProject.ext.dummyGradleUserName = 'user'
-
-		shouldFail(GradleException) {
-			parentProject.apply plugin: 'properties'
-		}
-	}
-
-	public void testChangeGradleUserNameValueWithChangedPropertiesPluginGradleUserNameProperty() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "gradleUserName = user"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.propertiesPluginGradleUserNameProperty = 'dummyGradleUserName'
-		parentProject.ext.environmentName = 'bad'
-		parentProject.apply plugin: 'properties'
+		assertEquals('Environment.environmentValue', parentProject.environmentProperty)
+		assertEquals('System.systemValue', parentProject.systemProperty)
+		assertEquals('Command.commandValue', parentProject.commandProperty)
+		assertEquals(18, tokens.size())
+		// camel case notation
+		assertEquals('user', tokens['gradleUserName'])
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', tokens['parentEnvironmentProperty'])
+		assertEquals('ParentEnvironmentLocal.childProjectValue', tokens['childProjectProperty'])
+		assertEquals('ParentEnvironmentLocal.childEnvironmentValue', tokens['childEnvironmentProperty'])
+		assertEquals('Home.homeValue', tokens['homeProperty'])
+		assertEquals('User.userValue', tokens['userProperty'])
+		assertEquals('Environment.environmentValue', tokens['environmentProperty'])
+		assertEquals('System.systemValue', tokens['systemProperty'])
+		assertEquals('Command.commandValue', tokens['commandProperty'])
+		// dot notation
+		assertEquals('user', tokens['gradle.user.name'])
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', tokens['parent.environment.property'])
+		assertEquals('ParentEnvironmentLocal.childProjectValue', tokens['child.project.property'])
+		assertEquals('ParentEnvironmentLocal.childEnvironmentValue', tokens['child.environment.property'])
+		assertEquals('Home.homeValue', tokens['home.property'])
+		assertEquals('User.userValue', tokens['user.property'])
+		assertEquals('Environment.environmentValue', tokens['environment.property'])
+		assertEquals('System.systemValue', tokens['system.property'])
+		assertEquals('Command.commandValue', tokens['command.property'])
 	}
 }
