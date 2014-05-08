@@ -95,20 +95,40 @@ gradle.taskGraph.whenReady { taskGraph ->
 }
 
 uploadArchives {
-	repositories {
-	    mavenDeployer {
-			if (signing.signatory) {
-				beforeDeployment { signPom(it) }
+	// We can't use taskGraph.whenReady because it doesn't resolve until after
+	// configuration.  The startParameter is not as good, but it probably
+	// good enough for our purposes.
+	if ( gradle.startParameter.taskNames.contains("uploadArchives") ) {
+		// Use Java 6's console to read from the console (no good for a CI
+		// environment)
+		Console console = System.console()
+		console.printf "\n\nWe have to upload some things in this build...\n\n"
+
+		if ( !project.hasProperty('mavenCentralUsername') ) {
+			def mavenCentralUsername = console.readLine("Maven Central Username: ")
+			allprojects { ext."mavenCentralUsername" = mavenCentralUsername }
+		}
+
+		if ( !project.hasProperty('mavenCentralPassword') ) {
+			def mavenCentralPassword = console.readLine("Maven Central Password: ")
+			allprojects { ext."mavenCentralPassword" = mavenCentralPassword }
+		}
+
+		repositories {
+			mavenDeployer {
+				if ( signing.signatory ) {
+					beforeDeployment { signPom(it) }
+				}
+				configuration = configurations.archives
+				//repository(url: "file://$buildDir/m2repo")
+				repository(url: mavenCentralUploadUrl) {
+					authentication(userName: mavenCentralUsername,
+									       password: mavenCentralPassword)
+					releases(updatePolicy: "always")
+					snapshots(updatePolicy: "always")
+				}
+				pom.project(pomConfiguration)
 			}
-		    configuration = configurations.archives
-			//repository(url: "file://$buildDir/m2repo")
-			repository(url: mavenCentralUploadUrl) {
-			    authentication(userName: project.hasProperty('mavenCentralUsername') ? mavenCentralUsername : System.properties.'user.name',
-				               password: project.hasProperty('mavenCentralPassword') ? mavenCentralPassword : '')
-				releases(updatePolicy: "always")
-				snapshots(updatePolicy: "always")
-			}
-			pom.project(pomConfiguration)
 		}
 	}
 }
