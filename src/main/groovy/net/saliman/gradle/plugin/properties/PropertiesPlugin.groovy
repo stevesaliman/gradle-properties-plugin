@@ -107,17 +107,6 @@ class PropertiesPlugin implements Plugin<Project> {
 		def envName = project."$project.propertiesPluginEnvironmentNameProperty"
 		project.ext.filterTokens = [:]
 
-		// Remember values of unmodifiable properties
-		def unmodifiableProperties = [:]
-		[
-			'propertiesPluginEnvironmentNameProperty',
-			project.propertiesPluginEnvironmentNameProperty,
-			'propertiesPluginGradleUserNameProperty',
-			project.propertiesPluginGradleUserNameProperty
-		].each {
-			unmodifiableProperties."$it" = project.hasProperty(it) ? project."$it" : null
-		}
-
 		// process files from least significant to most significant. With gradle
 		// properties, Last one in wins.
 		def foundEnvFile = false
@@ -141,14 +130,6 @@ class PropertiesPlugin implements Plugin<Project> {
 		// Make sure we got at least one environment file if we are not in the local environment.
 		if ( envName != 'local' && !foundEnvFile ) {
 			throw new FileNotFoundException("No environment files were found for the '$envName' environment")
-		}
-
-		// Check values of unmodifiable properties for modifications
-		unmodifiableProperties.each { key, value ->
-			if (project.hasProperty(key) ? value != project."$key" : value) {
-				throw new GradleException("The property '$key' must not change its value by applying the property file ordering of the properties plugin. " +
-				                          "Current value: '$value'; New value: '${project.hasProperty(key) ? project."$key" : ''}'")
-			}
 		}
 
 		// Register a task listener that adds the property checking helper methods.

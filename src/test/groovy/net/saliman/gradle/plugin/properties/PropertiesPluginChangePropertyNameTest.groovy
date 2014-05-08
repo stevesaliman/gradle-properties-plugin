@@ -175,246 +175,180 @@ class PropertiesPluginChangePropertyNameTest extends GroovyTestCase {
 		}
 	}
 
-	// with standard env name.
-	// 1. only set in env file - fail
+	/**
+	 * Try applying the plugin when we specify a different property for the
+	 * environment name, but we don't specify a value for that variable.  The
+	 * plugin should assume "local".  We'll try to confuse the plugin by setting
+	 * the standard environment property to a different value to make sure the
+	 * plugin is using the right property.  We don't need to check every property
+	 * from the file - we already know that works.
+	 */
+	public void testApplyChangedEnvNamePropertyNoValue() {
+		// simulate a "-PpropertiesPluginEnvironmentNameProperty=myEnvironment
+		// -PenvironmentName=test" command line
+		def commandArgs = [
+						propertiesPluginEnvironmentNameProperty: 'myEnvironment',
+						environmentName: 'test'
+		]
+		setNonFileProperties(true, true, commandArgs)
 
-	// 2. only set in user file - fail
-
-	// 3. set in env file and command line, no problem
-
-	// 4. Set in standard file, same value in env file - no problem.
-
-	// With new env name
-
-	// 1. specify in command line, but with no value - use local?  envName="dummy", also fine
-
-	// 2. specify in command line, bad value - fail?
-
-	// 3. specify in command line with good value.  envName= dummy, ok?
-
-	// 4. specify in standard file, value on command line - no problem.
-
-	// 5. specify in standard file, value in special file - fail?
-
-	// 6. specify name and var on command line, special overrides, but no problem.
-
-
-
-
-	// -1 use standard name to set env, but override it in env-properties err?
-
-	// -2 use standard name to set env, but change it in user properties. err?
-
-	// 1. use alternative var to set env, but don't specify value - assume local?
-
-	// 2. use alternative var to set env, specify bad value = err?
-
-	// 3. use alternate var to set env, specify good value. have right one?  Can we use envName as a normal prop?
-
-	// 4. use alternative var to set env, env file overrides it - err (override in normal file tested above.
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // this is #-1
-	// project has 'bad', not from command line, property file sets to dummy, fail? - can't really happen.
-	// unless we force it in a file....
-	public void testChangeEnvironmentNameValue() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "environmentName = dummy"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.environmentName = 'bad'
-
-		shouldFail(GradleException) {
-			parentProject.apply plugin: 'properties'
-		}
-	}
-
-  // set property via command line, have differet one in file, no problem.
-	public void testChangeEnvironmentNameValueWithoutEffect() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "environmentName = dummy"
-
-		setNonFileProperties(true, true, true)
-		parentProject.gradle.startParameter.projectProperties.environmentName = 'bad'
-		// As Gradle is not "booted", the start parameter is not
-		// transferred to a project property, so we do it manually here
-		parentProject.ext.environmentName = 'bad'
 		parentProject.apply plugin: 'properties'
-		assertEquals('bad', parentProject.environmentName)
-	}
-
-	// has user, not from command line.  Override in file. Can't really happen, unless we force in file.
-	public void testChangeGradleUserNameValue() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "gradleUserName = dummy"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.environmentName = 'bad'
-		parentProject.ext.gradleUserName = 'user'
-
-		shouldFail(GradleException) {
-			parentProject.apply plugin: 'properties'
-		}
-	}
-
-	// has username from special file, nowhere else, bad way to go
-	public void testSetGradleUserNameValue() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "gradleUserName = dummy"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.environmentName = 'bad'
-
-		shouldFail(GradleException) {
-			parentProject.apply plugin: 'properties'
-		}
-	}
-
-	// has value, not from command line, special file sets it to the same thing. no problem.
-	public void testReSetEnvironmentNameValue() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "environmentName = bad"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.environmentName = 'bad'
-		parentProject.apply plugin: 'properties'
-	}
-
-	// plugin gets new env var name, but no value specified.  Use local?
-	public void testChangePropertiesPluginEnvironmentNameProperty() {
-		setNonFileProperties(true, true, true)
-		parentProject.ext.propertiesPluginEnvironmentNameProperty =  'dummyEnvironmentName'
-		parentProject.apply plugin: 'properties'
-
-		assertFalse(parentProject.hasProperty('environmentName'))
-		assertTrue(parentProject.hasProperty('dummyEnvironmentName'))
-		assertEquals('local', parentProject.dummyEnvironmentName)
-		assertTrue(parentProject.hasProperty('parentEnvironmentProperty'))
+		def tokens = parentProject.filterTokens
+		// the plugin should be using the local environment,...
+		assertEquals('local', parentProject.myEnvironment)
+		// ... the environmentName should still be set ...
+		assertEquals('test', parentProject.environmentName)
+		// ... but the property values should come from the local file.
 		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
-		assertFalse('ParentEnvironmentTest.parentEnvironmentValue'.equals(parentProject.parentEnvironmentProperty))
+
+		// camel case notation
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', tokens['parentEnvironmentProperty'])
+		// dot notation
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', tokens['parent.environment.property'])
 	}
 
-	// has new var for env, that var has value, file is found.  get from test file?
-	public void testSetPropertiesPluginEnvironmentNamePropertyValue() {
-		setNonFileProperties(true, true, true)
-		parentProject.ext.propertiesPluginEnvironmentNameProperty =  'dummyEnvironmentName'
-		parentProject.ext.dummyEnvironmentName =  'test'
-		parentProject.apply plugin: 'properties'
+	/**
+	 * Try applying the plugin when we specify a different property for the
+	 * environment name, and we specify a value for that variable that doesn't
+	 * have a file.  The plugin should fail, even if the "environmentName" is
+	 * still set to a valid file.
+	 */
+	public void testApplyChangedEnvNamePropertyBadValue() {
+		// simulate a "-PpropertiesPluginEnvironmentNameProperty=myEnvironment
+		// -PmyEnvironment=dummy -PenvironmentName=test" command line
+		def commandArgs = [
+						propertiesPluginEnvironmentNameProperty: 'myEnvironment',
+						myEnvironment: 'dummy',
+						environmentName: 'test'
+		]
+		setNonFileProperties(true, true, commandArgs)
 
-		assertFalse(parentProject.hasProperty('environmentName'))
-		assertTrue(parentProject.hasProperty('dummyEnvironmentName'))
-		assertEquals('test', parentProject.dummyEnvironmentName)
-		assertTrue(parentProject.hasProperty('parentEnvironmentProperty'))
+		try {
+			parentProject.apply plugin: 'properties'
+			fail("We should have gotten an error when we're missing an environment file.")
+		} catch ( FileNotFoundException e) {
+			// this was expected.
+		}
+	}
+
+	/**
+	 * Try applying the plugin when we specify a different property for the
+	 * environment name, and we specify a value for that variable that does have
+	 * have a file.  The plugin should succeed, even if "envornmentName" is
+	 * invalid.
+	 */
+	public void testApplyChangedEnvNamePropertyGoodValue() {
+		// simulate a "-PpropertiesPluginEnvironmentNameProperty=myEnvironment
+		// -PmyEnvironment=test -PenvironmentName=dummy" command line
+		def commandArgs = [
+						propertiesPluginEnvironmentNameProperty: 'myEnvironment',
+						myEnvironment: 'test',
+						environmentName: 'dummy'
+		]
+		setNonFileProperties(true, true, commandArgs)
+
+		parentProject.apply plugin: 'properties'
+		def tokens = parentProject.filterTokens
+
+		// the plugin should be using the test environment,...
+		assertEquals('test', parentProject.myEnvironment)
+		// ... the environmentName should still be set ...
+		assertEquals('dummy', parentProject.environmentName)
+		// ... but the property values should come from the local file.
 		assertEquals('ParentEnvironmentTest.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
-		assertFalse('ParentEnvironmentLocal.parentEnvironmentValue'.equals(parentProject.parentEnvironmentProperty))
+
+		// camel case notation
+		assertEquals('ParentEnvironmentTest.parentEnvironmentValue', tokens['parentEnvironmentProperty'])
+		// dot notation
+		assertEquals('ParentEnvironmentTest.parentEnvironmentValue', tokens['parent.environment.property'])
 	}
 
-	// usr var name set, not on command line, no value given, this is fine.
-	public void testChangePropertiesPluginGradleUserNameProperty() {
-		setNonFileProperties(true, true, true)
-		parentProject.ext.propertiesPluginGradleUserNameProperty =  'dummyGradleUserName'
-		parentProject.apply plugin: 'properties'
+	/**
+	 * Try applying the plugin when we specify a different property for the
+	 * user name, but we don't specify a value for that variable.  The
+	 * plugin should assume no value, and we should get the "user" property from
+	 * the "home" file.  We'll try to confuse the plugin by setting the standard
+	 * user property to a different value to make sure the plugin is using the
+	 * right property.  We don't need to check every property from the file - we
+	 * already know that works.
+	 */
+	public void testApplyChangedUserNamePropertyNoValue() {
+		// simulate a "-PpropertiesPluginGradleUserNameProperty=myUSer
+		// -PgradleUserName=dummy" command line
+		def commandArgs = [
+						propertiesPluginGradleUserNameProperty: 'myUser',
+						gradleUserName: 'dummy'
+		]
+		setNonFileProperties(true, true, commandArgs)
 
-		assertFalse('User.userValue'.equals(parentProject.userProperty))
+		parentProject.apply plugin: 'properties'
+		def tokens = parentProject.filterTokens
+		// the plugin should be ignoring users,...
+		assertFalse(parentProject.hasProperty('myUser'))
+		// ... the gradleUserName should still be set ...
+		assertEquals('dummy', parentProject.gradleUserName)
+		// ... but the plugin shouldn't be using it.
+		assertEquals('Home.userValue', parentProject.userProperty)
+
+		// camel case notation
+		assertEquals('Home.userValue', tokens['userProperty'])
+		// dot notation
+		assertEquals('Home.userValue', tokens['user.property'])
 	}
 
-	// new user var which has value, not from command line.  Name is good.  right file?
-	public void testSetPropertiesPluginGradleUserNamePropertyValue() {
-		setNonFileProperties(true, true, true)
-		parentProject.ext.propertiesPluginGradleUserNameProperty =  'dummyGradleUserName'
-		parentProject.ext.dummyGradleUserName =  'user'
-		parentProject.apply plugin: 'properties'
+	/**
+	 * Try applying the plugin when we specify a different property for the
+	 * user name, and we specify a value for that variable that doesn't have a
+	 * file.  The plugin should fail, even if the "gradleUserName" is still set
+	 * to a valid file.
+	 */
+	public void testApplyChangedUserNamePropertyBadValue() {
+		// simulate a "-PpropertiesPluginGradleUserNameProperty=myUser
+		// -PmyUser=dummy -PgradleUserName=user" command line
+		def commandArgs = [
+						propertiesPluginGradleUserNameProperty: 'myUser',
+						myUser: 'dummy',
+						gradleUserName: 'user'
+		]
+		setNonFileProperties(true, true, commandArgs)
 
-		assertEquals('user', parentProject.dummyGradleUserName)
-		assertTrue(parentProject.hasProperty('userProperty'))
+		try {
+			parentProject.apply plugin: 'properties'
+			fail("We should have gotten an error when we're missing user file.")
+		} catch ( FileNotFoundException e) {
+			// this was expected.
+		}
+	}
+
+	/**
+	 * Try applying the plugin when we specify a different property for the
+	 * user name, and we specify a value for that variable that does have
+	 * have a file.  The plugin should succeed, even if "gradleUserNAme" is
+	 * invalid.
+	 */
+	public void testApplyChangedUserNamePropertyGoodValue() {
+		// simulate a "-PpropertiesPluginGradleUserNameProperty=myUser
+		// -PmyUser=user -PgradleUserName=dummy" command line
+		def commandArgs = [
+						propertiesPluginGradleUserNameProperty: 'myUser',
+						myUser: 'user',
+						gradleUserName: 'dummy'
+		]
+		setNonFileProperties(true, true, commandArgs)
+
+		parentProject.apply plugin: 'properties'
+		def tokens = parentProject.filterTokens
+
+		// the plugin should be using the 'user' user,...
+		assertEquals('user', parentProject.myUser)
+		// ... the gradleUserName should still be set ...
+		assertEquals('dummy', parentProject.gradleUserName)
+		// ... but the property values should come from the User file.
 		assertEquals('User.userValue', parentProject.userProperty)
-	}
 
-	// new user var which has invalid value.  fail?
-	public void testChangePropertiesPluginGradleUserNamePropertyValueWithMissingFile() {
-		setNonFileProperties(true, true, true)
-		parentProject.ext.propertiesPluginGradleUserNameProperty =  'dummyGradleUserName'
-		parentProject.ext.dummyGradleUserName =  'dummy'
-
-		shouldFail(FileNotFoundException) {
-			parentProject.apply plugin: 'properties'
-		}
-	}
-
-	// standard name used at start, special file sets new var name.  should or should not fail?.
-	public void testChangePropertiesPluginEnvironmentNamePropertyValue() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "propertiesPluginEnvironmentNameProperty = dummy"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.environmentName = 'bad'
-
-		shouldFail(GradleException) {
-			parentProject.apply plugin: 'properties'
-		}
-	}
-
-	// project has new env var which has value that points to file that sets new env value.  Fail.
-	public void testChangePropertiesPluginEnvironmentNamePropertyValueValue() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "dummyEnvironmentName = dummy"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.propertiesPluginEnvironmentNameProperty = 'dummyEnvironmentName'
-		parentProject.ext.dummyEnvironmentName = 'bad'
-
-		shouldFail(GradleException) {
-			parentProject.apply plugin: 'properties'
-		}
-	}
-
-	// project has new  var for env var, it has good value, that file sets environmentName.  This should be fine.
-	public void testChangeEnvironmentNameValueWithChangedPropertiesPluginEnvironmentNameProperty() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "environmentName = dummy"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.propertiesPluginEnvironmentNameProperty = 'dummyEnvironmentName'
-		parentProject.ext.dummyEnvironmentName = 'bad'
-		parentProject.apply plugin: 'properties'
-	}
-
-	// envName points to file that sets new user var - fail or not?
-	public void testChangePropertiesPluginGradleUserNamePropertyValue() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "propertiesPluginGradleUserNameProperty = dummy"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.environmentName = 'bad'
-
-		shouldFail(GradleException) {
-			parentProject.apply plugin: 'properties'
-		}
-	}
-
-	// project has env pointing to file that overrides new user var.  Fail?
-	public void testChangePropertiesPluginGradleUserNamePropertyValueValue() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "dummyGradleUserName = dummy"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.propertiesPluginGradleUserNameProperty = 'dummyGradleUserName'
-		parentProject.ext.environmentName = 'bad'
-		parentProject.ext.dummyGradleUserName = 'user'
-
-		shouldFail(GradleException) {
-			parentProject.apply plugin: 'properties'
-		}
-	}
-
-	// envName points to file that sets gradleUser, but we're not using that var.  Good.
-	public void testChangeGradleUserNameValueWithChangedPropertiesPluginGradleUserNameProperty() {
-		new File("${parentProject.projectDir}/gradle-bad.properties").text = "gradleUserName = user"
-
-		setNonFileProperties(true, true, true)
-		parentProject.ext.propertiesPluginGradleUserNameProperty = 'dummyGradleUserName'
-		parentProject.ext.environmentName = 'bad'
-		parentProject.apply plugin: 'properties'
+		// camel case notation
+		assertEquals('User.userValue', tokens['userProperty'])
+		// dot notation
+		assertEquals('User.userValue', tokens['user.property'])
 	}
 }

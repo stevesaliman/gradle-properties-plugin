@@ -1,3 +1,14 @@
+Changes for 1.3.2
+=================
+With Björn Kautler's help, we've made the following changes for 1.3.2.
+- Errors and omissions from the README have been corrected.
+
+- The names of the properties where the plugin will get the environment name
+  and the user name are now configurable (Issue #9).
+
+- The maven central credentials are now only required if I'm actually uploading
+  to maven central, so other users can now build the plugin. (Issue #10).
+
 Changes for 1.3.1
 =================
 - Filter tokens used to contain property names in dot notation (some.var.name),

@@ -2,7 +2,8 @@
 The Properties plugin is a useful plugin that changes the way Gradle loads
 properties from the various properties files.  See the [CHANGELOG]
 (http://github.com/stevesaliman/gradle-properties-plugin/blob/master/CHANGELOG)
-for recent changes.
+for recent changes, with a thank you to Björn Kautler for his work on the
+1.3.2 release.
 
 Gradle can add properties to your project in several ways, as documented in the
 Gradle [User Guide]
@@ -172,7 +173,7 @@ buildscript {
 		mavenCentral()
 	}
 	dependencies {
-		classpath 'net.saliman:gradle-properties-plugin:1.3.1'
+		classpath 'net.saliman:gradle-properties-plugin:1.3.2'
 	}
 }
 
