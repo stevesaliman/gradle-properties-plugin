@@ -31,7 +31,7 @@ directory.
 6. The command line properties set with -P arguments.
 
 The properties plugin enhances this sequence by adding two additional types of
-property files. One is for project properties that change from environment to
+property files. One is for properties that change from environment to
 environment, and the other is for properties that are common to a user (or
 client), but change from user to user (or client to client).  The order of
 execution for the properties plugin is:
@@ -181,19 +181,28 @@ buildscript {
 apply plugin: 'properties'
 ```
 
-Note that this only applies the plugin to the current project.  To apply the
+Note that this only applies the plugin to the current project. To apply the
 plugin to all projects in a multi-project build, use the following instead of
-```apply plugin: properties'```:
+```apply plugin: 'properties'```:
 ```groovy
 allprojects {
   apply plugin: 'properties'
 }
 ```
 
+If you also use your properties during the initialization phase in settings.gradle,
+you can also apply the plugin there. In this case the properties files of the root
+project and the properties files beneath the settings.gradle file are read, in that order.
+After those, as usual the property files in ${gradleUserHomeDir}, the environment variables,
+the system properties and the command line properties are handled.
+Due to a bug in Gradle, you currently (Gradle 1.11) cannot use ```apply plugin: 'properties'```
+in the settings.gradle file, but you have to use the full class name
+```apply plugin: net.saliman.gradle.plugin.properties.PropertiesPlugin```.
+
 When the properties plugin is applied, three things happen. First, the plugin
 processes the various property files and property location as described above.
 
-Next, the plugin creates a project property named "filterTokens".  The filter
+Next, the plugin creates a property named ```filterTokens```. The filter
 tokens is a map of name-value pairs that can be used when doing a filtered file
 copy.  There will be token for each property defined in the given properties
 file. The name of each token will be the name of the property from the
@@ -204,7 +213,8 @@ file will create 2 tokens.  One will be named "applicationLogDir", and the
 other will be named "application.log.dir".  They will both have a value of
 /opt/tomcat/logs
 
-Finally, the properties plugin adds some property closures to every task in the
+Finally, the properties plugin - if applied to a project rather than a
+settings instance - adds some property closures to every task in the
 build (and causes them to be added to new tasks defined later). These properties
 can be used in the configuration of a task define which properties must (or
 should) be present for that task to work.  Properties will be checked between
