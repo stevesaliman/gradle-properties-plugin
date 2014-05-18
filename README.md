@@ -3,7 +3,7 @@ The Properties plugin is a useful plugin that changes the way Gradle loads
 properties from the various properties files.  See the [CHANGELOG]
 (http://github.com/stevesaliman/gradle-properties-plugin/blob/master/CHANGELOG)
 for recent changes, with a thank you to Björn Kautler for his work on the
-1.3.2 release.
+1.4.0 release.
 
 Gradle can add properties to your project in several ways, as documented in the
 Gradle [User Guide]
@@ -101,6 +101,22 @@ do token replacement in files, allowing Gradle to edit configuration files
 for you.  See Gradle's documentation for the ```copy``` task for more
 information on filtering.
 
+Starting with version 1.4.0, the plugin can also be applied to a Settings
+object by applying the plugin in the settings.gradle file.  This feature is
+still incubating, and its behavior can change in future releases, but for now,
+it processes files in the following order:
+
+1. The gradle.properties file in the directory where settings.gradle is
+   located.
+
+2. The gradle-${environmentName}.properties file in the directory where
+   settings.gradle is located. If no environment is specified, the plugin will
+   assume an environment name of "local".  We strongly recommend adding
+   gradle-local.properties to the .gitignore file of the project so that
+   developers' local configurations don't interfere with each other.
+
+3. The files described in steps 5-9 for applying to a project.
+
 The Properties plugin is designed to make it easier to work with properties that
 change from environment to environment, or client to client. It makes life
 easier for developers who are new to a project to configure and build,
@@ -173,7 +189,7 @@ buildscript {
 		mavenCentral()
 	}
 	dependencies {
-		classpath 'net.saliman:gradle-properties-plugin:1.3.2'
+		classpath 'net.saliman:gradle-properties-plugin:1.4.0'
 	}
 }
 

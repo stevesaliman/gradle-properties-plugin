@@ -1,6 +1,9 @@
-Changes for 1.3.2
+Changes for 1.4.0
 =================
-With Björn Kautler's help, we've made the following changes for 1.3.2.
+Thank you to Björn Kautler for his ideas and assistance with the changes made
+for version 1.4.0.
+- The plugin can now be applied to settings via settings.gradle. (Issue #13)
+
 - Errors and omissions from the README have been corrected.
 
 - The names of the properties where the plugin will get the environment name

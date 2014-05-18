@@ -4,14 +4,15 @@ import org.gradle.api.GradleException
 import org.gradle.testfixtures.ProjectBuilder
 
 /**
- * Test class for parent projects that apply Properties plugin.  In a multi
- * project build, parent and child projects use slightly different files.  A
- * child project will inherit from the parent project's property files, but
- * the parent project does not use the child project's files.
+ * The {@link PropertiesPluginParentProjectTest} class tests applying the
+ * plugin with the standard {@code environmentName} and {@code gradleUserName}
+ * properties driving the environment name and gradle user.
  * <p>
- * Note that we set properties in each test because we can't seem to clear a
- * property once it is set, and Gradle itself reads some of the properties
- * before we apply the plugin.
+ * This class tests changing these properties via
+ * {@code propertiesPluginEnvironmentNameProperty} and
+ * {@code propertiesPluginGradleUserNameProperty} properties before applying
+ * the plugin to make sure we still do the right thing when the user wants to
+ * reconfigure what the plugin uses during apply time.
  *
  * @author Steven C. Saliman
  */
@@ -185,11 +186,6 @@ class PropertiesPluginChangePropertyNameTest extends GroovyTestCase {
 		assertEquals('local', parentProject.environmentName)
 		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
 	}
-
-	/**
-	 * A plugin can also be applied by the gradle.settings file.
-	 */
-
 
 	/**
 	 * Try applying the plugin when we specify a different property for the
