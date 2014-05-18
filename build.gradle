@@ -159,12 +159,6 @@ idea.project.ipr.withXml { provider ->
 	gradleSettings.appendNode('option', [name: 'SDK_HOME', value: gradle.gradleHomeDir.absolutePath])
 }
 
-// if we're signing anything, we'll need the GPG password
-gradle.taskGraph.whenReady { taskGraph ->
-	if (taskGraph.allTasks.any { it instanceof Sign }) {
-	}
-}
-
 /**
 * Create POM config and return for use by other tasks.
 */

@@ -16,7 +16,6 @@ import org.gradle.testfixtures.ProjectBuilder
  * @author Steven C. Saliman
  */
 class PropertiesPluginChangePropertyNameTest extends GroovyTestCase {
-	def plugin = new PropertiesPlugin()
 	def parentProject = null;
 	def childProject = null;
 	def parentCommandProperties = null;
@@ -174,6 +173,23 @@ class PropertiesPluginChangePropertyNameTest extends GroovyTestCase {
 			}
 		}
 	}
+
+	/**
+	 * Typically, a plugin is applied by name, but Gradle supports applying by
+	 * type.  Prove that it works.  We don't need to get fancy here, the default
+	 * environment works fine.  We only need to check that one property was read
+	 * from the local file.
+	 */
+	public void testApplyPluginByType() {
+		parentProject.apply plugin: net.saliman.gradle.plugin.properties.PropertiesPlugin
+		assertEquals('local', parentProject.environmentName)
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
+	}
+
+	/**
+	 * A plugin can also be applied by the gradle.settings file.
+	 */
+
 
 	/**
 	 * Try applying the plugin when we specify a different property for the
