@@ -1,3 +1,7 @@
+Changes for 1.4.1
+=================
+- Fixed a bug that could occur when applying to a settings object.
+
 Changes for 1.4.0
 =================
 Thank you to Björn Kautler for his ideas and assistance with the changes made
