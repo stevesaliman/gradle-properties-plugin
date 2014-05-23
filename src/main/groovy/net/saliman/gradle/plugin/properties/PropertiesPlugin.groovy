@@ -218,8 +218,8 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 	 */
 	private buildPropertyFileListFromSettings(settings, envName) {
 		def files = []
-		files.add(new PropertyFile("${settings.rootDir}/gradle.properties", FileType.OPTIONAL))
-		files.add(new PropertyFile("${settings.rootDir}/gradle-${envName}.properties", FileType.ENVIRONMENT))
+		files.add(new PropertyFile("${settings.settingsDir}/gradle.properties", FileType.OPTIONAL))
+		files.add(new PropertyFile("${settings.settingsDir}/gradle-${envName}.properties", FileType.ENVIRONMENT))
 		return addCommonPropertyFileList(settings, files)
 	}
 

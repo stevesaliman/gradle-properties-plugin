@@ -7,7 +7,7 @@ apply plugin: "signing"
 apply plugin: "idea"
 apply plugin: "eclipse"
 
-version = "1.4.0"
+version = "1.4.1"
 group = "net.saliman"
 archivesBaseName = "gradle-properties-plugin"
 ext.isSnapshot = version.endsWith("SNAPSHOT")
@@ -116,7 +116,7 @@ uploadArchives {
 		repositories {
 			mavenDeployer {
 				if ( signing.signatory ) {
-					beforeDeployment { signPom(it) }
+					beforeDeployment { signing.signPom(it) }
 				}
 				configuration = configurations.archives
 				//repository(url: "file://$buildDir/m2repo")
