@@ -1,4 +1,7 @@
 # Gradle Properties Plugin #
+Gradle has made the first 2.0 release candidate available, and the properties
+plugin appears to work fine with it.
+
 The Properties plugin is a useful plugin that changes the way Gradle loads
 properties from the various properties files.  See the [CHANGELOG]
 (http://github.com/stevesaliman/gradle-properties-plugin/blob/master/CHANGELOG)
