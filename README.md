@@ -184,8 +184,8 @@ directory needed by the log4j.properties template.
 
 **Step 3: Include and apply the plugin**
 
-To use the plugin in Gradle 2.1 or later, add the following to the build.gradle
-file:
+To use the plugin with Gradle 2.1 or later, add the following to the 
+build.gradle file:
 
 ```groovy
 plugins {
@@ -193,7 +193,7 @@ plugins {
 }
 ```
 
-To use the plugin in Gradle 2.0 or older, add the following to build.gradle:
+To use the plugin with Gradle 2.0 or older, add the following to build.gradle:
 
 ```groovy
 // Pull the plugin from Maven Central
