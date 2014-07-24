@@ -1,7 +1,7 @@
 Changes for 1.4.2
 =================
-- Changed the plugin id to "net.saliman.properties" and added to the new Gradle
-  Plugin repository.
+- Changed the plugin id to "net.saliman.properties" and added it to the new 
+  Gradle Plugin repository.
 
 Changes for 1.4.1
 =================

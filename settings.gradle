@@ -1,0 +1,7 @@
+#!groovy
+// The above triggers groovy syntax highlighting in vim
+
+// This is a hack that lets me use a directory with a different name from the
+// Maven artifact.  It works around the fact that you can't change the project
+// name from the build.gradle file.
+rootProject.name = 'gradle-properties-plugin'

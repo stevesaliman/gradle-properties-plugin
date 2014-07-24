@@ -21,7 +21,6 @@ apply plugin: 'com.jfrog.bintray'
 
 version = "1.4.2"
 group = "net.saliman"
-archivesBaseName = "gradle-properties-plugin"
 ext.isSnapshot = version.endsWith("SNAPSHOT")
 
 if ( isSnapshot ) {
@@ -176,7 +175,7 @@ def getPomConfiguration() {
 	return {
 		name 'Gradle Properties Plugin'
 		packaging 'jar'
-		description 'A Gradle plugin for loading and working with properties.'
+		description "A Gradle plugin for loading and working with properties, enhancing Gradle's built in functionality."
 		url 'https://github.com/stevesaliman/gradle-properties-plugin'
 		licenses {
 			license {
@@ -209,12 +208,12 @@ bintray {
   pkg {
     repo = 'maven'
     name = 'gradle-properties-plugin'
-    desc = "A Gradle plugin to extend Gradle's property loading capabilities."
+		desc = "A Gradle plugin for loading and working with properties, enhancing Gradle's built in functionality."
     licenses = [ 'Apache-2.0' ]
     websiteUrl = 'https://github.com/stevesaliman/gradle-properties-plugin'
     issueTrackerUrl = 'https://github.com/stevesaliman/gradle-properties-plugin/issues'
     vcsUrl = 'https://github.com/stevesaliman/gradle-properties-plugin.git'
-    labels = [ 'cobertura', 'coverage' ]
+    labels = [ 'gradle', 'properties' ]
     publicDownloadNumbers = true
     version {
       //name = version
