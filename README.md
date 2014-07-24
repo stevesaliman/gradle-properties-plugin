@@ -1,8 +1,8 @@
 # Gradle Properties Plugin #
 Gradle has released 2.0, and the properties plugin appears to work fine with it.
 It is also available on the new [Gradle Plugin portal]
-(http://plugins.gradle.org/) Gradle plugin repository with the id 
-```net.saliman.properties```.
+(http://plugins.gradle.org/) Gradle plugin repository with the 
+id ```net.saliman.properties```.
 
 The Properties plugin is a useful plugin that changes the way Gradle loads
 properties from the various properties files.  See the [CHANGELOG]
