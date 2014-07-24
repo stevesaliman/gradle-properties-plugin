@@ -1,6 +1,7 @@
 # Gradle Properties Plugin #
-Gradle has made the first 2.0 release candidate available, and the properties
-plugin appears to work fine with it.
+Gradle has released 2.0, and the properties plugin appears to work fine with it.
+It is also available on the new [Gradle Plugin portal]
+(http://plugins.gradle.org/) Gradle plugin repository.
 
 The Properties plugin is a useful plugin that changes the way Gradle loads
 properties from the various properties files.  See the [CHANGELOG]
@@ -202,10 +203,10 @@ apply plugin: 'properties'
 
 Note that this only applies the plugin to the current project. To apply the
 plugin to all projects in a multi-project build, use the following instead of
-```apply plugin: 'properties'```:
+```apply plugin: 'net.saliman.properties'```:
 ```groovy
 allprojects {
-  apply plugin: 'properties'
+  apply plugin: 'net.saliman.properties'
 }
 ```
 
@@ -214,8 +215,9 @@ you can also apply the plugin there. In this case the properties files of the ro
 project and the properties files beneath the settings.gradle file are read, in that order.
 After those, as usual the property files in ${gradleUserHomeDir}, the environment variables,
 the system properties and the command line properties are handled.
-Due to a bug in Gradle, you currently (Gradle 1.11) cannot use ```apply plugin: 'properties'```
-in the settings.gradle file, but you have to use the full class name
+Due to a bug in Gradle, you currently (Gradle 1.11) cannot use 
+```apply plugin: 'net.saliman.properties'``` in the settings.gradle file, but 
+you have to use the full class name
 ```apply plugin: net.saliman.gradle.plugin.properties.PropertiesPlugin```.
 
 When the properties plugin is applied, three things happen. First, the plugin

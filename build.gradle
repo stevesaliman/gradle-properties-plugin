@@ -1,11 +1,23 @@
 #!groovy
 // The above triggers groovy syntax highlighting in vim
 
+buildscript {
+  repositories {
+    jcenter()
+    mavenCentral()
+  }
+  dependencies {
+    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:0.5'
+	  classpath 'org.codehaus.groovy:groovy-all:2.3.4'
+  }
+}
+
 apply plugin: "groovy"
 apply plugin: "maven"
 apply plugin: "signing"
 apply plugin: "idea"
 apply plugin: "eclipse"
+apply plugin: 'com.jfrog.bintray'
 
 version = "1.4.1"
 group = "net.saliman"
@@ -186,4 +198,30 @@ def getPomConfiguration() {
 			url 'https://github.com/stevesaliman/gradle-properties-plugin'
 		}
 	}
+}
+
+bintray {
+  user = project.hasProperty('bintrayUsername') ? project.getProperty('bintrayUsername') : ''
+  key = project.hasProperty('bintrayApiKey') ? project.getProperty('bintrayApiKey') : ''
+
+  configurations = [ 'archives' ]
+
+  pkg {
+    repo = 'maven'
+    name = 'gradle-properties-plugin'
+    licenses = [ 'Apache-2.0' ]
+    desc = "A Gradle plugin to extend Gradle's property loading capabilities."
+    websiteUrl = 'https://github.com/stevesaliman/gradle-properties-plugin'
+    issueTrackerUrl = 'https://github.com/stevesaliman/gradle-properties-plugin/issues'
+    vcsUrl = 'https://github.com/stevesaliman/gradle-properties-plugin.git'
+    labels = [ 'cobertura', 'coverage' ]
+    publicDownloadNumbers = true
+    version {
+      name = version
+      vcsTag = version
+      attributes = [
+              'gradle-plugin': 'net.saliman.properties:net.saliman:gradle-properties-plugin'
+      ]
+    }
+  }
 }
