@@ -209,16 +209,16 @@ bintray {
   pkg {
     repo = 'maven'
     name = 'gradle-properties-plugin'
-    licenses = [ 'Apache-2.0' ]
     desc = "A Gradle plugin to extend Gradle's property loading capabilities."
+    licenses = [ 'Apache-2.0' ]
     websiteUrl = 'https://github.com/stevesaliman/gradle-properties-plugin'
     issueTrackerUrl = 'https://github.com/stevesaliman/gradle-properties-plugin/issues'
     vcsUrl = 'https://github.com/stevesaliman/gradle-properties-plugin.git'
     labels = [ 'cobertura', 'coverage' ]
     publicDownloadNumbers = true
     version {
-      name = version
-      vcsTag = version
+      //name = version
+      //vcsTag = version
       attributes = [
               'gradle-plugin': 'net.saliman.properties:net.saliman:gradle-properties-plugin'
       ]
