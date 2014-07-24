@@ -6,7 +6,7 @@ id ```net.saliman.properties```.
 
 The Properties plugin is a useful plugin that changes the way Gradle loads
 properties from the various properties files.  See the [CHANGELOG]
-(http://github.com/stevesaliman/gradle-properties-plugin/blob/master/CHANGELOG)
+(http://github.com/stevesaliman/gradle-properties-plugin/blob/master/CHANGELOG.md)
 for recent changes, with a thank you to Björn Kautler for his work on the
 1.4.0 release.
 
