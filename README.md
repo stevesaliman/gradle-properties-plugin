@@ -1,7 +1,8 @@
 # Gradle Properties Plugin #
 Gradle has released 2.0, and the properties plugin appears to work fine with it.
 It is also available on the new [Gradle Plugin portal]
-(http://plugins.gradle.org/) Gradle plugin repository.
+(http://plugins.gradle.org/) Gradle plugin repository with the id 
+```net.saliman.properties```.
 
 The Properties plugin is a useful plugin that changes the way Gradle loads
 properties from the various properties files.  See the [CHANGELOG]
@@ -183,22 +184,30 @@ directory needed by the log4j.properties template.
 
 **Step 3: Include and apply the plugin**
 
-Add the following to the build.gradle file:
+To use the plugin in Gradle 2.1 or later, add the following to the build.gradle
+file:
 
 ```groovy
+plugins {
+  id 'net.saliman.properties' version '1.4.2'
+}
+```
 
+To use the plugin in Gradle 2.0 or older, add the following to build.gradle:
+
+```groovy
 // Pull the plugin from Maven Central
 buildscript {
 	repositories {
 		mavenCentral()
 	}
 	dependencies {
-		classpath 'net.saliman:gradle-properties-plugin:1.4.1'
+		classpath 'net.saliman:gradle-properties-plugin:1.4.2'
 	}
 }
 
 // invoke the plugin
-apply plugin: 'properties'
+apply plugin: 'net.saliman.properties'
 ```
 
 Note that this only applies the plugin to the current project. To apply the

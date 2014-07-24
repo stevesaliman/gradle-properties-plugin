@@ -19,7 +19,7 @@ apply plugin: "idea"
 apply plugin: "eclipse"
 apply plugin: 'com.jfrog.bintray'
 
-version = "1.4.1"
+version = "1.4.2"
 group = "net.saliman"
 archivesBaseName = "gradle-properties-plugin"
 ext.isSnapshot = version.endsWith("SNAPSHOT")
