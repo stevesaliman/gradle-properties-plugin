@@ -163,7 +163,12 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 			pluginAware.ext."$pluginAware.propertiesPluginEnvironmentNameProperty" = 'local'
 		}
 		def envName = pluginAware."$pluginAware.propertiesPluginEnvironmentNameProperty"
-		pluginAware.ext.filterTokens = [:]
+		
+		if ( !pluginAware.hasProperty('filterTokens' ) ) {
+			pluginAware.ext.filterTokens = [:]
+		} else {
+			pluginAware.ext.filterTokens = pluginAware.filterTokens
+		}
 
 		// process files from least significant to most significant. With gradle
 		// properties, Last one in wins.
