@@ -19,9 +19,11 @@ apply plugin: "idea"
 apply plugin: "eclipse"
 apply plugin: 'com.jfrog.bintray'
 
-version = "1.4.2"
+// Release version that won't conflict with the bintray plugin
+def releaseVersion = "1.4.3-SNAPSHOT"
 group = "net.saliman"
-ext.isSnapshot = version.endsWith("SNAPSHOT")
+version = releaseVersion
+ext.isSnapshot = releaseVersion.endsWith("SNAPSHOT")
 
 if ( isSnapshot ) {
     println "using snapshot"
@@ -217,7 +219,8 @@ bintray {
     publicDownloadNumbers = true
     version {
       //name = version
-      //vcsTag = version
+//	    desc = 'version specific desc'
+      vcsTag = "Release_${releaseVersion}"
       attributes = [
               'gradle-plugin': 'net.saliman.properties:net.saliman:gradle-properties-plugin'
       ]
