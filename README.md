@@ -273,15 +273,20 @@ prepTest) task whenever properties or template files change, or to switch
 environments.
 
 # Properties added to each task #
-This plugin adds some closures to each task, which can be used to check for the
+This plugin adds some methods to each task, which can be used to check for the
 presence of properties after configuration, but before any tasks are executed.
+These methods will also add properties to the task's inputs that can be used
+to determine when a task is up to date.  A task is never up to date if there 
+are no outputs, but if the task has defined any outputs, Gradle will consider
+the task up to date if the other inputs and outputs haven't changed, and the
+properties haven't either.
 
 **requiredProperty**
 
  ```groovy
  requiredProperty "somePropertyName"
  ```
-This closure throws a MissingPropertyException if the named property is not defined.
+This method throws a MissingPropertyException if the named property is not defined.
 
 **requiredProperties**
 
@@ -289,19 +294,19 @@ This closure throws a MissingPropertyException if the named property is not defi
 requiredProperties "property1", "property2", ...
 ```
 
-This closure throws a MissingPropertyException if any of the named properties are not defined
+This method throws a MissingPropertyException if any of the named properties are not defined
 
 **recommendedProperty**
 
 ```groovy
 recommendedProperty "somePropertyName", "default File Text"
 ```
-This closure is handy when there are properties that have defaults somewhere else.
+This method is handy when there are properties that have defaults somewhere else.
 For example, the build file might define it, or the application might be able to
 get it from a system file. It is most useful in alerting newer developers that
 something must be configured somewhere on their systems.
 
-The closure checks to see if the given property is defined. If it is not, a warning
+The method checks to see if the given property is defined. If it is not, a warning
 message is displayed alerting the user that a default will be used, and if the
 defaultFile has been given, the message will include it so that the developer
 knows which file will be providing the default value.
@@ -312,7 +317,7 @@ knows which file will be providing the default value.
 recommendedProperties names: ["property1", "property2", ...], defaultFile: "default File Text"
 ```
 
-This closure checks all the given property names, and prints a message if we're missing any.
+This method checks all the given property names, and prints a message if we're missing any.
 
 # Notes #
 If a property is set in the build.gradle file before the properties plugin is
