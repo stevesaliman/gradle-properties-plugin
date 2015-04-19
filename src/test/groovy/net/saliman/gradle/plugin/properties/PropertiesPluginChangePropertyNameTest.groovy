@@ -238,7 +238,7 @@ class PropertiesPluginChangePropertyNameTest extends GroovyTestCase {
 		try {
 			parentProject.apply plugin: 'properties'
 			fail("We should have gotten an error when we're missing an environment file.")
-		} catch ( FileNotFoundException e) {
+		} catch ( Exception e) {
 			// this was expected.
 		}
 	}
@@ -327,7 +327,7 @@ class PropertiesPluginChangePropertyNameTest extends GroovyTestCase {
 		try {
 			parentProject.apply plugin: 'properties'
 			fail("We should have gotten an error when we're missing user file.")
-		} catch ( FileNotFoundException e) {
+		} catch ( Exception e) {
 			// this was expected.
 		}
 	}

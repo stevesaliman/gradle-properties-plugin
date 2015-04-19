@@ -27,6 +27,8 @@ class PropertiesPluginChildProjectTest extends GroovyTestCase {
 	def childProject = null;
 	def parentCommandProperties = null;
 	def childCommandProperties = null;
+	def parentTask = null;
+	def childTask = null;
 
 	/**
 	 * Set up the test data.  This calls a helper method to create the projects
@@ -62,6 +64,9 @@ class PropertiesPluginChildProjectTest extends GroovyTestCase {
 		}
 		parentCommandProperties = parentProject.gradle.startParameter.projectProperties
 
+		// Add a task we can check for properties.
+		parentTask = parentProject.task('myTest')
+
 		// Create the child project.
 		def childProjectDir = new File('build/test/parentProject/childProject')
 		childProject = ProjectBuilder
@@ -79,6 +84,9 @@ class PropertiesPluginChildProjectTest extends GroovyTestCase {
 			childProject.ext.parentProjectProperty = 'ParentProject.parentProjectValue'
 		}
 		childCommandProperties = parentProject.gradle.startParameter.projectProperties
+
+		// Add a task we can check for properties.
+		childTask = childProject.task('myTest')
 
 		// Add the child to the parent.
 		parentProject.childProjects.put('child', childProject)
@@ -187,7 +195,9 @@ class PropertiesPluginChildProjectTest extends GroovyTestCase {
 	public void testCheckPropertyMissing() {
 		childProject.ext.someProperty = 'someValue'
 		// we succeed if we don't get an exception.
-		plugin.checkProperty(childProject, 'someProperty', 'someTask')
+		plugin.checkProperty(childProject, 'someProperty', childTask, 'someMethod')
+		def inputValue = childTask.inputs.properties['someProperty']
+		assertEquals('Failed to register the task input', 'someValue', inputValue)
 
 	}
 
@@ -197,7 +207,7 @@ class PropertiesPluginChildProjectTest extends GroovyTestCase {
 	public void testCheckPropertyPresent() {
 		// we succeed if we don't get an exception.
 		shouldFail(MissingPropertyException) {
-			plugin.checkProperty(childProject, 'someProperty', 'someTask')
+			plugin.checkProperty(childProject, 'someProperty', childTask, 'someMethod')
 		}
 
 	}
@@ -607,7 +617,7 @@ class PropertiesPluginChildProjectTest extends GroovyTestCase {
 		try {
 			childProject.apply plugin: 'properties'
 			fail("We should have gotten an error when we're missing a user file.")
-		} catch ( FileNotFoundException e) {
+		} catch ( Exception e) {
 			// this was expected.
 		}
 	}
@@ -810,7 +820,7 @@ class PropertiesPluginChildProjectTest extends GroovyTestCase {
 		try {
 			childProject.apply plugin: 'properties'
 			fail("We should have gotten an error when we're missing an environment file.")
-		} catch ( FileNotFoundException e) {
+		} catch ( Exception e) {
 			// this was expected.
 		}
 	}

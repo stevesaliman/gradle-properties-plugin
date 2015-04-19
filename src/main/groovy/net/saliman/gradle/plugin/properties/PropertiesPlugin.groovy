@@ -361,7 +361,7 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 					// ... But we only want to actually do it if the task needing the
 					// property is actually going to be executed.
 					if (graph.hasTask(task.path)) {
-						checkProperty(project, propertyName, task.path)
+						checkProperty(project, propertyName, task, "requiredProperty")
 					}
 				}
 			}
@@ -371,7 +371,7 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 				project.gradle.taskGraph.whenReady { graph ->
 					if (graph.hasTask(task.path)) {
 						for ( propertyName in propertyNames ) {
-							checkProperty(project, propertyName, task.path)
+							checkProperty(project, propertyName, task, "requiredProperties")
 						}
 					}
 				}
@@ -381,7 +381,7 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 			task.ext.recommendedProperty = { String propertyName, String defaultFile=null ->
 				project.gradle.taskGraph.whenReady { graph ->
 					if (graph.hasTask(task.path)) {
-						checkRecommendedProperty(project, propertyName, task.path, defaultFile)
+						checkRecommendedProperty(project, propertyName, task, "recommendedProperty", defaultFile)
 					}
 				}
 			}
@@ -393,7 +393,7 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 						def propertyNames = hash['names']
 						def defaultFile = hash['defaultFile']
 						for ( propertyName in propertyNames ) {
-							checkRecommendedProperty(project, propertyName, task.path, defaultFile)
+							checkRecommendedProperty(project, propertyName, task, "recommendedProperties", defaultFile)
 						}
 					}
 				}
@@ -405,13 +405,21 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 	 * Helper method to make sure a given property exists
 	 * @param project the project we're dealing with
 	 * @param propertyName the name of the property we want to check
+	 * @param task the task checking the property.
+	 * @param caller the name of the method calling this one.  Used to log
+	 *        who is doing the work.
 	 * @throws MissingPropertyException if the named property is not in the
 	 * project.
 	 */
-	private checkProperty(project, propertyName, taskName) {
+	private checkProperty(project, propertyName, task, caller) {
+		def taskName = task.path
 		if ( !project.hasProperty(propertyName) ) {
 			throw new MissingPropertyException("You must set the '${propertyName}' property for the '$taskName' task")
 		}
+		// Now register the property as an input for the task.
+		def propertyValue = project.property(propertyName)
+		logger.debug("PropertiesPlugin:${caller} Setting $propertyName as an input to ${taskName} with a value of '$propertyValue'")
+		task.inputs.property(propertyName, propertyValue)
 	}
 
 	/**
@@ -419,10 +427,14 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 	 * missing.
 	 * @param project the project we're dealing with
 	 * @param propertyName the name of the property we want to check
+	 * @param task the task checking the property.
+	 * @param caller the name of the method calling this one.  Used to log
+	 *        who is doing the work.
 	 * @param defaultFile an optional description of where the project will get
 	 *        the value if it isn't specified during the build.
 	 */
-	private checkRecommendedProperty(project, propertyName, taskName, defaultFile) {
+	private checkRecommendedProperty(project, propertyName, task, caller, defaultFile) {
+		def taskName = task.path
 		if ( !project.hasProperty(propertyName) ) {
 			def message = "WARNING: '${propertyName}', required by '$taskName' task, has no value, using default"
 			if ( defaultFile != null ) {
@@ -430,7 +442,11 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 			}
 			println message
 		}
+		def propertyValue = project.property(propertyName)
+		logger.debug("PropertiesPlugin:${caller} Setting $propertyName as an input to ${taskName} with a value of '$propertyValue'")
+		task.inputs.property(propertyName, propertyValue)
 	}
+
 
 	/**
 	 * helper method to convert a camel case property name to a dot notated

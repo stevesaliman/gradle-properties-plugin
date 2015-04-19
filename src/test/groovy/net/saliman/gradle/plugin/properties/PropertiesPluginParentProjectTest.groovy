@@ -19,6 +19,8 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	def plugin = new PropertiesPlugin()
 	def parentProject = null;
 	def childProject = null;
+	def parentTask = null;
+	def childTask = null;
 	def parentCommandProperties = null;
 	def childCommandProperties = null;
 
@@ -56,6 +58,9 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		parentProject.ext.userProperty = 'Home.userValue'
 		parentCommandProperties = parentProject.gradle.startParameter.projectProperties
 
+		// Add a task we can check for properties.
+		parentTask = parentProject.task('myTest')
+
 		// Create the child project.
 		def childProjectDir = new File('build/test/parentProject/childProject')
 		childProject = ProjectBuilder
@@ -73,6 +78,9 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		childProject.ext.homeProperty = 'Home.homeValue'
 		childProject.ext.userProperty = 'Home.userValue'
 		childCommandProperties = parentProject.gradle.startParameter.projectProperties
+
+		// Add a task we can check for properties.
+		childTask = childProject.task('myTest')
 
 		// Add the child to the parent.
 		parentProject.childProjects.put('child', childProject)
@@ -181,8 +189,9 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	public void testCheckPropertyPresent() {
 		parentProject.ext.someProperty = 'someValue'
 		// we succeed if we don't get an exception.
-		plugin.checkProperty(parentProject, 'someProperty', 'someTask')
-
+		plugin.checkProperty(parentProject, 'someProperty', parentTask, 'someMethod')
+		def inputValue = parentTask.inputs.properties['someProperty']
+		assertEquals('Failed to register the task input', 'someValue', inputValue)
 	}
 
 	/**
@@ -191,7 +200,7 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	public void testCheckPropertyMissing() {
 		// we succeed if we don't get an exception.
 		shouldFail(MissingPropertyException) {
-			plugin.checkProperty(parentProject, 'someProperty', 'someTask')
+			plugin.checkProperty(parentProject, 'someProperty', parentTask, 'someMethod')
 		}
 
 	}
@@ -461,7 +470,7 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		try {
 			parentProject.apply plugin: 'properties'
 			fail("We should have gotten an error when we're missing a user file.")
-		} catch ( FileNotFoundException e) {
+		} catch ( Exception e) {
 			// this was expected.
 		}
 	}
@@ -604,7 +613,7 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		try {
 			parentProject.apply plugin: 'properties'
 			fail("We should have gotten an error when we're missing an environment file.")
-		} catch ( FileNotFoundException e) {
+		} catch ( Exception e) {
 			// this was expected.
 		}
 	}
