@@ -19,6 +19,9 @@ apply plugin: "idea"
 apply plugin: "eclipse"
 apply plugin: 'com.jfrog.bintray'
 
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
 // Release version that won't conflict with the bintray plugin
 def releaseVersion = "1.4.3-SNAPSHOT"
 group = "net.saliman"
