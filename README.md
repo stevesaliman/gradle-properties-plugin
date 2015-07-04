@@ -263,7 +263,13 @@ task prep(type: Copy) {
     into srcResourceDir
     filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.filterTokens)
 }
+```
 
+Other tasks in the project can then depend on this ```prep``` task to make sure 
+they don't run unless the tokenized files are in the right place.  For example,
+a Java project might define the following in the build script:
+
+```groovy
 compileJava.dependsOn prep
 ```
 
