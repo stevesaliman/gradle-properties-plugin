@@ -112,6 +112,8 @@ class PropertiesPluginChangePropertyNameTest extends GroovyTestCase {
 						tofile : "${parentUserDir}/gradle.properties")
 		builder.copy(file:'src/test/resources/user-gradle.properties',
 						tofile : "${parentUserDir}/gradle-user.properties")
+		builder.copy(file:'src/test/resources/parent-env-local-sub.properties',
+						tofile : "${parentProject.projectDir}/gradle-properties/gradle-local.properties")
 
 		// copy the files for the child project.
 		def childUserDir = childProject.gradle.gradleUserHomeDir
@@ -125,6 +127,8 @@ class PropertiesPluginChangePropertyNameTest extends GroovyTestCase {
 						tofile : "${childUserDir}/gradle.properties")
 		builder.copy(file:'src/test/resources/user-gradle.properties',
 						tofile : "${childUserDir}/gradle-user.properties")
+		builder.copy(file:'src/test/resources/child-env-local-sub.properties',
+						tofile : "${childProject.projectDir}/gradle-properties/gradle-local.properties")
 	}
 
 	/**
@@ -201,6 +205,117 @@ class PropertiesPluginChangePropertyNameTest extends GroovyTestCase {
 		parentProject.apply plugin: net.saliman.gradle.plugin.properties.PropertiesPlugin
 		assertEquals('local', parentProject.environmentName)
 		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
+	}
+
+	/**
+	 * Try applying the plugin when we specify a different property for the
+	 * property file directory, but we don't specify a value for that variable.
+	 * The plugin should assume the project directory.  We'll try to confuse the
+	 * plugin by setting the standard environmentFileDir property to a different
+	 * value to make sure the plugin is using the right property.  We don't need
+	 * to check every property from the file - we already know that works.
+	 */
+	public void testApplyChangedPropFileDirPropertyNoValue() {
+		// simulate a "-PpropertiesPluginEnvironmentFileDirProperty=myDir
+		// -PenvironmentFileDir=gradle-properties" command line
+		def commandArgs = [
+						propertiesPluginEnvironmentFileDirProperty: 'myDir',
+						environmentFileDir: 'gradle-properties' // this is a good dir.
+		]
+		setNonFileProperties(true, true, commandArgs)
+
+		parentProject.apply plugin: 'properties'
+		def tokens = parentProject.filterTokens
+		//the old environmentFileDir property should still be set ...
+		assertEquals('gradle-properties', parentProject.environmentFileDir)
+		// ... but the property values should come from the local file in the
+		// project directory.
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
+
+		// camel case notation
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', tokens['parentEnvironmentProperty'])
+		// dot notation
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', tokens['parent.environment.property'])
+	}
+
+	/**
+	 * Try applying the plugin when we specify a different property for the
+	 * property file directory, and we specify a value for that variable that
+	 * doesn't exist.  The plugin should fail, even if the "environmentFileDir"
+	 * is still set to a valid directory.
+	 */
+	public void testApplyChangedPropFileDirPropertyBadValue() {
+		// simulate a "-PpropertiesPluginEnvironmentFileDirProperty=myEnvironment
+		// -PenvironmentFileDir=dummy -PenvironmentName=test" command line
+		def commandArgs = [
+						propertiesPluginEnvironmentFileDirProperty: 'myDir',
+						myDir: 'dummy',
+						environmentFileDir: 'gradle-properties'
+		]
+		setNonFileProperties(true, true, commandArgs)
+
+		try {
+			parentProject.apply plugin: 'properties'
+			fail("We should have gotten an error when we're using an invalid property file directory.")
+		} catch ( Exception e) {
+			// this was expected.
+		}
+	}
+
+	/**
+	 * Try applying the plugin when we specify a different property for the
+	 * property file directory, and we specify a value for that variable that
+	 * points to a file.  The plugin should fail, even if the
+	 * "environmentFileDir" is still set to a valid directory.
+	 */
+	public void testApplyChangedPropFileDirPropertyFileValue() {
+		// simulate a "-PpropertiesPluginEnvironmentFileDirProperty=myEnvironment
+		// -PenvironmentFileDir=dummy -PenvironmentName=test" command line
+		def commandArgs = [
+						propertiesPluginEnvironmentFileDirProperty: 'myDir',
+						myDir: 'gradle-local.properties',
+						environmentFileDir: 'gradle-properties'
+		]
+		setNonFileProperties(true, true, commandArgs)
+
+		try {
+			parentProject.apply plugin: 'properties'
+			fail("We should have gotten an error when we're using an invalid property file directory.")
+		} catch ( Exception e) {
+			// this was expected.
+		}
+	}
+
+	/**
+	 * Try applying the plugin when we specify a different property for the
+	 * property file directory, and we specify a value for that variable that
+	 * points to a valid directory.  The plugin should succeed, even if
+	 * "environmentFileDir" is invalid.
+	 */
+	public void testApplyChangedEnvironmentFileDirPropertyGoodValue() {
+		// simulate a "-PpropertiesPluginEnvironmentFileDirProperty=myDir
+		// -PmyDir=test -PenvironmentFileDir=dummy" command line
+		def commandArgs = [
+						propertiesPluginEnvironmentFileDirProperty: 'myDir',
+						myDir: 'gradle-properties',
+						environmentFileDir: 'dummy'
+		]
+		setNonFileProperties(true, true, commandArgs)
+
+		parentProject.apply plugin: 'properties'
+		def tokens = parentProject.filterTokens
+
+		// the plugin should be using the subdirectory to load properties,...
+		assertEquals('gradle-properties', parentProject.myDir)
+		// ... the environmentFileDir should still be set ...
+		assertEquals('dummy', parentProject.environmentFileDir)
+		// ... but the property values should come from the file in the subdirectory.
+		assertEquals('ParentEnvironmentSubLocal.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
+
+		// camel case notation
+		assertEquals('ParentEnvironmentSubLocal.parentEnvironmentValue', tokens['parentEnvironmentProperty'])
+		// dot notation
+		assertEquals('ParentEnvironmentSubLocal.parentEnvironmentValue', tokens['parent.environment.property'])
 	}
 
 	/**

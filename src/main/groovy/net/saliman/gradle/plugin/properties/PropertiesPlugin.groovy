@@ -91,14 +91,27 @@ import org.slf4j.LoggerFactory
  * </li>
  * </ol>
  * <p>
- * {@code environmentName} and {@code gradleUserName} are the properties that
- * this plugin uses by default to get the names of the environment and gradle
- * user to use.  If you don't like these names, or if there is a clash with
- * properties you already use in your build, you can configure the properties
- * the plugin will use.  You can tell the plugin what property to use for the
- * environment name by setting a value for the
- * {@code propertiesPluginEnvironmentNameProperty} property, and you can tell
- * the plugin what property to use for the user name by setting a value for the
+ * As mentioned, this plugin looks for the gradle-${environmentName}.properties
+ * file in the project directory for projects, or the directory with
+ * settings.gradle if the plugin is applied to a Settings object.  You can
+ * change this behavior by specifying a value for the {@code environmentFileDir}
+ * property.  It is strongly recommended to use a subdirectory of the project
+ * or settings directory when using this option.  This property only effects
+ * where the environment specific files are located, it does not change where
+ * the plugin looks for the other files, such as the user files or default
+ * gradle files.
+ * <p>
+ * {@code environmentFileDir}, {@code environmentName}, and
+ * {@code gradleUserName} are the properties that this plugin use by default to
+ * get the location of the environment files and the names of the environment
+ * and gradle user to use.  If you don't like these names, or if there is a
+ * clash with properties you already use in your build, you can configure the
+ * properties the plugin will use.  You can tell the plugin what property to
+ * use for the environment file directory by setting a value for the
+ * {@code propertiesPluginEnvironmentFileDirProperty} property. You can tell
+ * the plugin what property to use for the name of the environment by setting
+ * the {@code propertiesPluginEnvironmentNameProperty}, and you can tell the
+ * plugin what property to use to set the user name by setting a value for the
  * {@code propertiesPluginGradleUserNameProperty} property. Those properties
  * have to be set before this plugin is applied. That means you can put them in
  * the standard property file locations supported by Gradle itself, in
@@ -107,7 +120,8 @@ import org.slf4j.LoggerFactory
  * <p>
  * The last thing to set a property wins.  All files are optional unless an
  * environment or user is specified, in which case the file belonging to the
- * specified environment or user must exist.
+ * specified environment or user must exist.  If an environment file directory
+ * is specified, that directory must exist, be a directory, and be readable.
  * <p>
  * As properties are set, they are also placed in a filterTokens property.
  * the filterTokens property is a map of tokens that can be used when doing a
@@ -166,13 +180,23 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 	 * an environment name, and returns a list of property files to evaluate
 	 * when the plugin is applied.
 	 */
-	private doApply(pluginAware, buildPropertyFileList) {
+	private doApply(pluginAware, propertyFileListBuilder) {
+		if ( !pluginAware.hasProperty('propertiesPluginEnvironmentFileDirProperty' ) ) {
+			pluginAware.ext.propertiesPluginEnvironmentFileDirProperty = 'environmentFileDir'
+		}
 		if ( !pluginAware.hasProperty('propertiesPluginEnvironmentNameProperty' ) ) {
 			pluginAware.ext.propertiesPluginEnvironmentNameProperty = 'environmentName'
 		}
 		if ( !pluginAware.hasProperty('propertiesPluginGradleUserNameProperty' ) ) {
 			pluginAware.ext.propertiesPluginGradleUserNameProperty = 'gradleUserName'
 		}
+
+		// If the user hasn't set a property file directory, assume the project
+		// directory.
+		if ( !pluginAware.hasProperty(pluginAware.propertiesPluginEnvironmentFileDirProperty ) ) {
+			pluginAware.ext."$pluginAware.propertiesPluginEnvironmentFileDirProperty" = '.'
+		}
+		def envFileDir = pluginAware."$pluginAware.propertiesPluginEnvironmentFileDirProperty"
 
 		// If the user hasn't set an environment, assume "local"
 		if ( !pluginAware.hasProperty(pluginAware.propertiesPluginEnvironmentNameProperty ) ) {
@@ -184,7 +208,7 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 		// process files from least significant to most significant. With gradle
 		// properties, Last one in wins.
 		def foundEnvFile = false
-		def propertyFiles = buildPropertyFileList(pluginAware, envName)
+		def propertyFiles = propertyFileListBuilder(pluginAware, envFileDir, envName)
 		propertyFiles.each { PropertyFile file ->
 			def success = processPropertyFile(pluginAware, file)
 			// Fail right away if we're missing a required file.
@@ -211,15 +235,32 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 	 * Build a list of property files to process for a project, in the order in
 	 * which they need to be processed.
 	 * @param project the project applying the plugin.
+	 * @param envFileDir the directory to search for environment files.
+	 * @param envName the name of the environment to load.
 	 * @return a List of {@link PropertyFile}s
 	 */
-	private buildPropertyFileListFromProject(project, envName) {
+	private buildPropertyFileListFromProject(project, envFileDir, envName) {
 		def p = project
 		def files = []
 		while ( p != null ) {
 			// We'll need to process the files from the top down, so build the list
-			// backwards.
-			files.add(0, new PropertyFile("${p.projectDir}/gradle-${envName}.properties", FileType.ENVIRONMENT))
+			// backwards.  Note that only the environment file can come from a special
+			// location.  gradle.properties must come from the project itself.
+			def fileDir = p.projectDir
+			if ( envFileDir != '.') {
+				fileDir = "${fileDir}/${envFileDir}"
+				// Make sure the directory actually exists...
+				File d = new File(fileDir)
+				def exists = d.exists()
+				def isDirectory = d.isDirectory()
+				def isReadable = d.canRead()
+				if ( !exists || !isDirectory || !isReadable ) {
+					throw new FileNotFoundException("Environment File directory '$envFileDir' does not exist, or is not a readable directory")
+				}
+				logger.info("PropertiesPlugin:apply Using ${envFileDir} as the source of environment specific files.")
+			}
+
+			files.add(0, new PropertyFile("${fileDir}/gradle-${envName}.properties", FileType.ENVIRONMENT))
 			files.add(0, new PropertyFile("${p.projectDir}/gradle.properties", FileType.OPTIONAL))
 			p = p.parent
 		}
@@ -230,12 +271,27 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 	 * Build a list of property files to process for a settings object, in the
 	 * order in which they need to be processed.
 	 * @param settings the settings applying the plugin.
+	 * @param envFileDir the directory to search for environment files.
+	 * @param envName the name of the environment to load.
 	 * @return a List of {@link PropertyFile}s
 	 */
-	private buildPropertyFileListFromSettings(settings, envName) {
+	private buildPropertyFileListFromSettings(settings, envFileDir, envName) {
+		def fileDir = settings.settingsDir
+		if ( envFileDir != '.') {
+			fileDir = "${fileDir}/${envFileDir}"
+			// Make sure the directory actually exists...
+			File d = new File(fileDir)
+			def exists = d.exists()
+			def isDirectory = d.isDirectory()
+			def isReadable = d.canRead()
+			if ( !exists || !isDirectory || !isReadable ) {
+				throw new FileNotFoundException("Environment File directory '$envFileDir' does not exist, or is not a readable directory")
+			}
+			logger.info("PropertiesPlugin:apply Using ${envFileDir} as the source of environment specific files.")
+		}
 		def files = []
 		files.add(new PropertyFile("${settings.settingsDir}/gradle.properties", FileType.OPTIONAL))
-		files.add(new PropertyFile("${settings.settingsDir}/gradle-${envName}.properties", FileType.ENVIRONMENT))
+		files.add(new PropertyFile("${fileDir}/gradle-${envName}.properties", FileType.ENVIRONMENT))
 		return addCommonPropertyFileList(settings, files)
 	}
 
@@ -292,8 +348,8 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 	}
 
 	/**
-	 * Process the environment properties, setting pluginAware properties and adding
-	 * tokens for any environment variable starting with
+	 * Process the environment properties, setting pluginAware properties and
+	 * adding tokens for any environment variable starting with
 	 * {@code ORG_GRADLE_PROJECT_}, per the Gradle specification.
 	 * @param pluginAware the enclosing pluginAware.
 	 */

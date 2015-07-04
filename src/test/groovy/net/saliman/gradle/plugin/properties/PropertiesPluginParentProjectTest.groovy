@@ -120,6 +120,8 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 						tofile : "${parentUserDir}/gradle.properties")
 		builder.copy(file:'src/test/resources/user-gradle.properties',
 						tofile : "${parentUserDir}/gradle-user.properties")
+		builder.copy(file:'src/test/resources/parent-env-local-sub.properties',
+						tofile : "${parentProject.projectDir}/gradle-properties/gradle-local.properties")
 
 		// copy the files for the child project.
 		def childUserDir = childProject.gradle.gradleUserHomeDir
@@ -133,6 +135,8 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 						tofile : "${childUserDir}/gradle.properties")
 		builder.copy(file:'src/test/resources/user-gradle.properties',
 						tofile : "${childUserDir}/gradle-user.properties")
+		builder.copy(file:'src/test/resources/child-env-local-sub.properties',
+						tofile : "${childProject.projectDir}/gradle-properties/gradle-local.properties")
 	}
 
 	/**
@@ -348,6 +352,40 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 		assertEquals('ParentEnvironmentLocal.childEnvironmentValue', testFilter)
 		testFilter = tokens['parent.environment.property']
 		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', testFilter)
+	}
+
+	/**
+	 * Verify that when a property is set in the environment and project files,
+	 * we don't specify an environment, but we do specify a property directory,
+	 * the local environment file wins, but that we use the file in the directory
+	 * and not the one at the project level. This also makes sure the files in
+	 * the child project are ignored when we apply at a parent level.
+	 */
+	public void testApplyUseDefaultFileInDirectory() {
+		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user
+		// -PenvironmentFileName=gradle-properties" command line
+		def commandArgs = [
+						commandProperty: 'Command.commandValue',
+						gradleUserName: 'user',
+						environmentFileDir: 'gradle-properties'
+		]
+		setNonFileProperties(true, true, commandArgs)
+
+		parentProject.apply plugin: 'properties'
+		def tokens = parentProject.filterTokens
+		assertEquals('local' , parentProject.environmentName)
+		assertEquals('user', parentProject.gradleUserName)
+
+		assertEquals('ParentEnvironmentSubLocal.childEnvironmentValue', parentProject.childEnvironmentProperty)
+		assertEquals('ParentEnvironmentSubLocal.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
+		def testFilter = tokens['childEnvironmentProperty']
+		assertEquals('ParentEnvironmentSubLocal.childEnvironmentValue', testFilter)
+		testFilter = tokens['parentEnvironmentProperty']
+		assertEquals('ParentEnvironmentSubLocal.parentEnvironmentValue', testFilter)
+		testFilter = tokens['child.environment.property']
+		assertEquals('ParentEnvironmentSubLocal.childEnvironmentValue', testFilter)
+		testFilter = tokens['parent.environment.property']
+		assertEquals('ParentEnvironmentSubLocal.parentEnvironmentValue', testFilter)
 	}
 
 	/**

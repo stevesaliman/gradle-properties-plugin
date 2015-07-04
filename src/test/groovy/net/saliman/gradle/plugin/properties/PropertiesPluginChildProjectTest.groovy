@@ -126,6 +126,8 @@ class PropertiesPluginChildProjectTest extends GroovyTestCase {
 						tofile : "${parentProject.projectDir}/gradle-test.properties")
 		builder.copy(file:'src/test/resources/parent-project-gradle.properties',
 						tofile : "${parentProject.projectDir}/gradle.properties")
+		builder.copy(file:'src/test/resources/parent-env-local-sub.properties',
+						tofile : "${parentProject.projectDir}/gradle-properties/gradle-local.properties")
 
 		// copy the files for the child project.
 		def childUserDir = childProject.gradle.gradleUserHomeDir
@@ -139,6 +141,8 @@ class PropertiesPluginChildProjectTest extends GroovyTestCase {
 						tofile : "${childProject.projectDir}/gradle-test.properties")
 		builder.copy(file:'src/test/resources/child-project-gradle.properties',
 						tofile : "${childProject.projectDir}/gradle.properties")
+		builder.copy(file:'src/test/resources/child-env-local-sub.properties',
+						tofile : "${childProject.projectDir}/gradle-properties/gradle-local.properties")
 	}
 
 	/**
@@ -555,6 +559,65 @@ class PropertiesPluginChildProjectTest extends GroovyTestCase {
 		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', tokens['parent.environment.property'])
 		assertEquals('ChildProject.childProjectValue', tokens['child.project.property'])
 		assertEquals('ChildEnvironmentLocal.childEnvironmentValue', tokens['child.environment.property'])
+		assertEquals('Home.homeValue', tokens['home.property'])
+		assertEquals('User.userValue', tokens['user.property'])
+		assertEquals('Environment.environmentValue', tokens['environment.property'])
+		assertEquals('System.systemValue', tokens['system.property'])
+		assertEquals('Command.commandValue', tokens['command.property'])
+	}
+
+	/**
+	 * Apply the plugin when no environment is specified, but we do specify a
+	 * directory.  This should apply environment properties from the Local file
+	 * instead of the Test file, and it should use the one in the property
+	 * directory.  This will also verify that the child environment files
+	 * override the parent environment files.
+	 */
+	public void testApplyUseDefaultEnvironmentFileInDirectory() {
+		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user
+		// -PenvironmentFileDir=gradle-properties" command line
+		def commandArgs = [
+						commandProperty: 'Command.commandValue',
+						gradleUserName: 'user',
+						environmentFileDir: 'gradle-properties'
+		]
+		setNonFileProperties(true, true, commandArgs)
+
+		childProject.apply plugin: 'properties'
+		def tokens = childProject.filterTokens;
+		assertEquals('local' , childProject.environmentName)
+		assertEquals('user', childProject.gradleUserName)
+
+		assertEquals('local', childProject.environmentName)
+		assertEquals('ParentProject.parentProjectValue', childProject.parentProjectProperty)
+		assertEquals('ParentEnvironmentSubLocal.parentEnvironmentValue', childProject.parentEnvironmentProperty)
+		assertEquals('ChildProject.childProjectValue', childProject.childProjectProperty)
+		assertEquals('ChildEnvironmentSubLocal.childEnvironmentValue', childProject.childEnvironmentProperty)
+		assertEquals('Home.homeValue', childProject.homeProperty)
+		assertEquals('User.userValue', childProject.userProperty)
+		assertEquals('Environment.environmentValue', childProject.environmentProperty)
+		assertEquals('System.systemValue', childProject.systemProperty)
+		assertEquals('Command.commandValue', childProject.commandProperty)
+		assertEquals(22, tokens.size())
+		// camel case notation
+		assertEquals('user', tokens['gradleUserName'])
+		assertEquals('gradle-properties', tokens['environmentFileDir'])
+		assertEquals('ParentProject.parentProjectValue', tokens['parentProjectProperty'])
+		assertEquals('ParentEnvironmentSubLocal.parentEnvironmentValue', tokens['parentEnvironmentProperty'])
+		assertEquals('ChildProject.childProjectValue', tokens['childProjectProperty'])
+		assertEquals('ChildEnvironmentSubLocal.childEnvironmentValue', tokens['childEnvironmentProperty'])
+		assertEquals('Home.homeValue', tokens['homeProperty'])
+		assertEquals('User.userValue', tokens['userProperty'])
+		assertEquals('Environment.environmentValue', tokens['environmentProperty'])
+		assertEquals('System.systemValue', tokens['systemProperty'])
+		assertEquals('Command.commandValue', tokens['commandProperty'])
+		// dot notation
+		assertEquals('user', tokens['gradle.user.name'])
+		assertEquals('gradle-properties', tokens['environment.file.dir'])
+		assertEquals('ParentProject.parentProjectValue', tokens['parent.project.property'])
+		assertEquals('ParentEnvironmentSubLocal.parentEnvironmentValue', tokens['parent.environment.property'])
+		assertEquals('ChildProject.childProjectValue', tokens['child.project.property'])
+		assertEquals('ChildEnvironmentSubLocal.childEnvironmentValue', tokens['child.environment.property'])
 		assertEquals('Home.homeValue', tokens['home.property'])
 		assertEquals('User.userValue', tokens['user.property'])
 		assertEquals('Environment.environmentValue', tokens['environment.property'])
