@@ -1,9 +1,4 @@
 # Gradle Properties Plugin #
-Gradle has released 2.0, and the properties plugin appears to work fine with it.
-It is also available on the new [Gradle Plugin portal]
-(http://plugins.gradle.org/) Gradle plugin repository with the 
-id ```net.saliman.properties```.
-
 The Properties plugin is a useful plugin that changes the way Gradle loads
 properties from the various properties files.  See the [CHANGELOG]
 (http://github.com/stevesaliman/gradle-properties-plugin/blob/master/CHANGELOG.md)
@@ -12,9 +7,9 @@ for recent changes.
 Gradle can add properties to your project in several ways, as documented in the
 Gradle [User Guide]
 (http://www.gradle.org/docs/current/userguide/tutorial_this_and_that.html).
-Gradle applies the different methods in a particular order, and the value of a
-property in your project will be the value from the last thing that set the
-property.  Gradle's order of processing is:
+Gradle uses these ways in a particular order, and the value of a property in 
+your project will be the value from the last thing that set the property.
+Gradle's order of processing is:
 
 1. The gradle.properties file in the parent project's directory, if the project
 is a module of a multi-project build.
@@ -99,13 +94,21 @@ standard property file locations supported by Gradle itself, in environment
 variables, system properties, -P options or in the build.gradle file itself
 before applying this plugin.
 
+You can also change the directory where the gradle-${environmentName}.properties
+files live.  The ```environmentFileDir``` property can be set to the name of a
+directory where the environment files live.  Note that this property has no
+effect on the main ```gradle.properties``` file, because that file's location
+is specified by Gradle itself.  If the name ```environmentFileDir``` causes a
+problem in your environment, you can change it via the 
+```propertiesPluginEnvironmentFileDirProperty``` property.
+
 As with standard Gradle property processing, the last one in wins. The
 properties plugin also creates a "filterTokens" property that can be used to
 do token replacement in files, allowing Gradle to edit configuration files
 for you.  See Gradle's documentation for the ```copy``` task for more
 information on filtering.
 
-Starting with version 1.4.0, the plugin can also be applied to a Settings
+Starting with plugin version 1.4.0, the plugin can also be applied to a Settings
 object by applying the plugin in the settings.gradle file.  This feature is
 still incubating, and its behavior can change in future releases, but for now,
 it processes files in the following order:
@@ -156,7 +159,7 @@ JNDI data source, they know they need to set one up inside their container.
 The initial setup of a project is a little involved, but once done, this process
 greatly simplifies things for the developers who follow.
 
-**Step 1: Extract environment sensitive files to a template directorty**
+**Step 1: Extract environment sensitive files to a template directory**
 
 Make a directory to hold the template files and copy files that change, like
 log4j.properties, into it.
@@ -188,7 +191,7 @@ build.gradle file:
 
 ```groovy
 plugins {
-  id 'net.saliman.properties' version '1.4.2'
+  id 'net.saliman.properties' version '1.4.3'
 }
 ```
 
@@ -201,7 +204,7 @@ buildscript {
 		mavenCentral()
 	}
 	dependencies {
-		classpath 'net.saliman:gradle-properties-plugin:1.4.2'
+		classpath 'net.saliman:gradle-properties-plugin:1.4.3'
 	}
 }
 
@@ -255,18 +258,30 @@ Before the build can happen, tokenized files need to be copied to the right
 locations in the project.  This can be done with a task like the following:
 
 ```groovy
-task prep(type: Copy) {
+task prep() {
     requiredProperties "applicationLogDir", "logfileName", "defaultLogLevel"
-    from templateDir
-    include 'log4j.properties'
-    into srcResourceDir
-    filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.filterTokens)
+    outputs.file new File(resourceDir, 'log4j.properties')
+    doFirst {
+        copy {
+            from templateDir
+            include 'log4j.properties'
+            into resourceDir
+            filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: project.filterTokens)
+        }
+    }
 }
 ```
 
-Other tasks in the project can then depend on this ```prep``` task to make sure 
-they don't run unless the tokenized files are in the right place.  For example,
-a Java project might define the following in the build script:
+Note that this ```prep``` task adds a file to the ```outputs```.  We recommend
+setting outputs so that the task can take advantage of Gradles Up-To-Date
+detection.  The properties plugin will add all the properties it processes to
+the list of task inputs, but unless a task declares outputs, Gradle will always
+assume that the task is out of date.
+
+Once a ```prep``` task is defined, other tasks in the project can then depend on
+this it to make sure they don't run unless the tokenized files are in the right
+place.  For example, a Java project might define the following in the build 
+script:
 
 ```groovy
 compileJava.dependsOn prep
@@ -274,7 +289,7 @@ compileJava.dependsOn prep
 
 The reason we copy into the source resource directory instead of the build
 directory is to keep IDEs happy.  In general, you'll want to run the prep (or
-prepTest) task whenever properties or template files change, or to switch
+a prepTest) task whenever properties or template files change, or to switch
 environments.
 
 # Properties added to each task #

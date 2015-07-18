@@ -5,6 +5,7 @@ Changes for 1.4.3
   
 - Added the ability to change the location of the environment specific files
   (issue #15)
+  
 Changes for 1.4.2
 =================
 - Changed the plugin id to "net.saliman.properties" and added it to the new 
