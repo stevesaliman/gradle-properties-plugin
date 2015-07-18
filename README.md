@@ -274,9 +274,10 @@ task prep() {
 
 Note that this ```prep``` task adds a file to the ```outputs```.  We recommend
 setting outputs so that the task can take advantage of Gradles Up-To-Date
-detection.  The properties plugin will add all the properties it processes to
-the list of task inputs, but unless a task declares outputs, Gradle will always
-assume that the task is out of date.
+detection.  The properties plugin will add all the properties from the 
+```requiredProperties``` and ```recommendedProperties``` methods to the list of
+task inputs, but unless a task declares outputs, Gradle will always assume that
+the task is out of date.
 
 Once a ```prep``` task is defined, other tasks in the project can then depend on
 this it to make sure they don't run unless the tokenized files are in the right
