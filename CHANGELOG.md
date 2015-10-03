@@ -1,3 +1,9 @@
+Changes for 1.4.4
+=================
+- Previously, all properties were added to filter tokens in their original form
+  and dot notation.  The plugin now does this only if the property starts with
+  a lower case letter (Issue #22)
+  
 Changes for 1.4.3
 =================
 - Added code to help Gradle figure out that things are not up-to-date when a 

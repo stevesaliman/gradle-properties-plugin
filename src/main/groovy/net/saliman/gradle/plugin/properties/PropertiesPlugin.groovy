@@ -338,8 +338,8 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 				// add the property to the filter tokens, both in camel case and dot
 				// notation.
 				pluginAware.ext.filterTokens[key] = value;
-				def token = propertyToToken(key)
-				pluginAware.ext.filterTokens[token] = value
+				def dotKey = camelCaseToDotNotation(key)
+				pluginAware.ext.filterTokens[dotKey] = value
 				loaded++
 			}
 		}
@@ -361,8 +361,8 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 				// add the property to the filter tokens, both in camel case and dot
 				// notation.
 				pluginAware.ext.filterTokens[key.substring(19)] = value;
-				def token = propertyToToken(key.substring(19))
-				pluginAware.ext.filterTokens[token] = value
+				def dotKey = camelCaseToDotNotation(key.substring(19))
+				pluginAware.ext.filterTokens[dotKey] = value
 				loaded++
 			}
 		}
@@ -383,8 +383,8 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 				// add the property to the filter tokens, both in camel case and dot
 				// notation.
 				pluginAware.ext.filterTokens[key.substring(19)] = value;
-				def token = propertyToToken(key.substring(19))
-				pluginAware.ext.filterTokens[token] = value
+				def dotKey = camelCaseToDotNotation(key.substring(19))
+				pluginAware.ext.filterTokens[dotKey] = value
 				loaded++
 			}
 		}
@@ -403,8 +403,8 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 			// add the property to the filter tokens, both in camel case and dot
 			// notation.
 			pluginAware.ext.filterTokens[key] = value;
-			def token = propertyToToken(key)
-			pluginAware.ext.filterTokens[token] = value
+			def dotKey = camelCaseToDotNotation(key)
+			pluginAware.ext.filterTokens[dotKey] = value
 			loaded++
 		}
 		logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from the command line")
@@ -522,12 +522,19 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 
 	/**
 	 * helper method to convert a camel case property name to a dot notated
-	 * token for filtering.  For example, myPropertyName would become
-	 * my.property.name as a token.
+	 * one.  This is used by the plugin for filtering.  For example,
+	 * myPropertyName would become my.property.name as a token.  Property names
+	 * that don't start with a lower case letter are assumed to not be camel case
+	 * and are returned as is.  This means that callers will add the same property
+	 * twice, which should be fine.
 	 * @param propertyName the name of the property to convert
 	 * @return the converted property name
 	 */
-	private propertyToToken(String propertyName) {
+	private camelCaseToDotNotation(String propertyName) {
+		if ( !propertyName.charAt(0).isLowerCase() ) {
+			return propertyName
+		}
+
 		StringBuilder sb = new StringBuilder();
 		for ( char c : propertyName.getChars() ) {
 			if ( c.upperCase ) {

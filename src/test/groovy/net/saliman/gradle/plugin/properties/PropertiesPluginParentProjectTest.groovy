@@ -228,6 +228,36 @@ class PropertiesPluginParentProjectTest extends GroovyTestCase {
 	// These tests are split up into multiples so that if one part works but
 	// another doesn't we have an easier time finding things.
 	/**
+	 * Prior to fixing GitHub issue #22, the plugin would attempt to convert all
+	 * camel case properties to dot notation (propertyName -> property.name), in
+	 * the filterTokens, but this made some strange, unnecessary tokens when we
+	 * have a property that is all upper case (PROPERTY_NAME became
+	 * .p.r.o.p.e.r.t.y_.n.a.m.e).  This test makes sure we don't do that any
+	 * more.
+	 */
+	public void testApplyUpperCommandProperty() {
+		// simulate a "-PcommandProperty=Command.commandValue -PgradleUserName=user"
+		// command line
+		def commandArgs = [
+						UPPER_PROPERTY: 'Command.upperValue',
+						gradleUserName: 'user'
+		]
+		setNonFileProperties(true, true, commandArgs)
+
+		parentProject.apply plugin: 'properties'
+		def tokens = parentProject.filterTokens
+		assertEquals('local', parentProject.environmentName)
+
+		assertEquals('Command.upperValue', parentProject.UPPER_PROPERTY)
+		def testFilter = tokens['UPPER_PROPERTY']
+		assertEquals('Command.upperValue', testFilter)
+		// Prior to fixing Github issue #22, the plugin would create this strange,
+		// unneeded property.
+		testFilter = tokens['.u.p.p.e.r_.p.r.o.p.e.r.t.y']
+		assertNull(testFilter)
+	}
+
+	/**
 	 * Verify that a command line value overrides everything else.
 	 */
 	public void testApplyCommandProperty() {

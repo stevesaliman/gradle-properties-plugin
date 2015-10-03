@@ -238,12 +238,16 @@ Next, the plugin creates a property named ```filterTokens```. The filter
 tokens is a map of name-value pairs that can be used when doing a filtered file
 copy.  There will be token for each property defined in the given properties
 file. The name of each token will be the name of the property from the
-properties file. The plugin will also create a filter with the property name
-in dot notation to allow re-use of file templates created for Ant builds.  In
-our example, the "applicationLogDir=/opt/tomcat/logs" entry in the property
-file will create 2 tokens.  One will be named "applicationLogDir", and the
-other will be named "application.log.dir".  They will both have a value of
-/opt/tomcat/logs
+properties file. For convenience, The plugin will also create a filter with the
+property name in dot notation to allow re-use of file templates created for Ant
+builds.  The plugin only creates dot notation tokens for properties that start 
+with a lower case letter.  This means that in our example, the 
+"applicationLogDir=/opt/tomcat/logs" entry in the property file will create 2 
+tokens.  One will be named "applicationLogDir", and the other will be named 
+"application.log.dir".  They will both have a value of /opt/tomcat/logs.  If the
+property had been named APPLICATION_LOG_DIR, or _applicationLogDir, only the 
+original property would be in the filter tokens.  No copy would be made under 
+any other names.
 
 Finally, the properties plugin - if applied to a project rather than a
 settings instance - adds some property closures to every task in the
