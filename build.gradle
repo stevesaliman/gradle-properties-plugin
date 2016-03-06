@@ -16,6 +16,10 @@ buildscript {
   }
 }
 
+plugins {
+    id 'net.saliman.cobertura' version '2.2.7'
+}
+
 apply plugin: "groovy"
 apply plugin: "maven"
 apply plugin: "signing"
@@ -28,7 +32,7 @@ sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
 // Release version that won't conflict with the bintray plugin
-def releaseVersion = "1.4.4"
+def releaseVersion = "1.4.5-SNAPSHOT"
 group = "net.saliman"
 archivesBaseName = 'gradle-properties-plugin'
 version = releaseVersion

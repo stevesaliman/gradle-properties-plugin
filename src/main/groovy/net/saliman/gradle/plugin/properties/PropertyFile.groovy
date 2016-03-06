@@ -24,15 +24,19 @@ package net.saliman.gradle.plugin.properties
 class PropertyFile {
 	String filename
 	FileType fileType
+	boolean containsSystemProperties
 
 	/**
 	 * Populating constructor
 	 * @param filename the fully qualified name of the file
 	 * @param required whether or not the file is required
+	 * @param containsSystemProperties whether or not this file can contain
+	 *        properties that should be converted into System properties.
 	 */
-	PropertyFile(String filename, FileType fileType) {
+	PropertyFile(String filename, FileType fileType, containsSystemProperties) {
 		this.filename = filename
 		this.fileType = fileType
+		this.containsSystemProperties = containsSystemProperties
 	}
 
 	@Override

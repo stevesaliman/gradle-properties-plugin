@@ -108,6 +108,17 @@ do token replacement in files, allowing Gradle to edit configuration files
 for you.  See Gradle's documentation for the ```copy``` task for more
 information on filtering.
 
+Gradle can also set a Java system property from the properties it sees in the 
+various property files.  The Gradle [User Guide]
+https://docs.gradle.org/current/userguide/build_environment.html describes the
+process in more detail, but basically, properties that start with "systemProp."
+will be converted into Java system properties, but only if they are in the 
+```gradle.properties``` file in either the root project's directory or the 
+user's home directory.  The Gradle Properties plugin adds the 
+gradle-${environmentName}.properties in the project's root directory, and the
+${gradleUserHomeDir}/gradle-${gradleUserName}.properties file to the list of
+files that can contain properties from which Java system properties can be set.
+
 Starting with plugin version 1.4.0, the plugin can also be applied to a Settings
 object by applying the plugin in the settings.gradle file.  This feature is
 still incubating, and its behavior can change in future releases, but for now,

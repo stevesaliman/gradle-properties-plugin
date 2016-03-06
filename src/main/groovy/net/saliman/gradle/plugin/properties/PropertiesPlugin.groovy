@@ -260,8 +260,12 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 				logger.info("PropertiesPlugin:apply Using ${envFileDir} as the source of environment specific files.")
 			}
 
-			files.add(0, new PropertyFile("${fileDir}/gradle-${envName}.properties", FileType.ENVIRONMENT))
-			files.add(0, new PropertyFile("${p.projectDir}/gradle.properties", FileType.OPTIONAL))
+			// Whether or not the project property files can contain system
+			// properties is entirely dependent on whether the project whose
+			// files we're currently processing is the root project.
+			def processSystemProperties = (p == project.rootProject)
+			files.add(0, new PropertyFile("${fileDir}/gradle-${envName}.properties", FileType.ENVIRONMENT, processSystemProperties))
+			files.add(0, new PropertyFile("${p.projectDir}/gradle.properties", FileType.OPTIONAL, processSystemProperties))
 			p = p.parent
 		}
 		return addCommonPropertyFileList(project, files)
@@ -290,8 +294,8 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 			logger.info("PropertiesPlugin:apply Using ${envFileDir} as the source of environment specific files.")
 		}
 		def files = []
-		files.add(new PropertyFile("${settings.settingsDir}/gradle.properties", FileType.OPTIONAL))
-		files.add(new PropertyFile("${fileDir}/gradle-${envName}.properties", FileType.ENVIRONMENT))
+		files.add(new PropertyFile("${settings.settingsDir}/gradle.properties", FileType.OPTIONAL, true))
+		files.add(new PropertyFile("${fileDir}/gradle-${envName}.properties", FileType.ENVIRONMENT, true))
 		return addCommonPropertyFileList(settings, files)
 	}
 
@@ -306,25 +310,24 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 		// Add the rest of the files to the end.  The user property file is
 		// optional...
 		def userHome = pluginAware.getGradle().getGradleUserHomeDir();
-		files.add(new PropertyFile("${userHome}/gradle.properties", FileType.OPTIONAL))
+		files.add(new PropertyFile("${userHome}/gradle.properties", FileType.OPTIONAL, true))
 		if ( pluginAware.hasProperty(pluginAware.propertiesPluginGradleUserNameProperty) ) {
 			//... the gradleUserName file, if specified, is not.
 			def userName = pluginAware."$pluginAware.propertiesPluginGradleUserNameProperty"
-			files.add(new PropertyFile("${userHome}/gradle-${userName}.properties", FileType.REQUIRED))
+			files.add(new PropertyFile("${userHome}/gradle-${userName}.properties", FileType.REQUIRED, true))
 		}
 		return files
 	}
 
 	/**
 	 * Process a file, loading properties from it, and adding tokens.
-	 * @param filename the name of the file to process
 	 * @param pluginAware the enclosing pluginAware.
-	 * @param required whether or not processing this file is required.  Required
-	 *        files that are missing will cause an error.
+	 * @param file the file to process
 	 * @return whether or not we found the file requested.
 	 */
 	private boolean processPropertyFile(pluginAware, PropertyFile file) {
 		def loaded = 0
+		def systemProperties = 0
 		def propFile = new File(file.filename)
 		if ( !propFile.exists() ) {
 			logger.info("PropertiesPlugin:apply Skipping ${file.filename} because it does not exist")
@@ -341,9 +344,17 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 				def dotKey = camelCaseToDotNotation(key)
 				pluginAware.ext.filterTokens[dotKey] = value
 				loaded++
+				if ( file.containsSystemProperties && key.startsWith("systemProp.") ) {
+					def propName = key.substring(11)
+					System.setProperty(propName, value)
+					systemProperties++
+				}
 			}
 		}
 		logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from ${file.filename}")
+		if ( systemProperties > 0 ) {
+			logger.info("PropertiesPlugin:apply Set ${systemProperties} system properties from ${file.filename}")
+		}
 		return true
 	}
 

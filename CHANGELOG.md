@@ -1,3 +1,9 @@
+Changes for 1.4.5
+=================
+- Added support for setting system properties from properties in "environment" 
+  files that start with "systemProp.", just like gradle itself does with the
+  gradle.properties file. (Issue #23)
+
 Changes for 1.4.4
 =================
 - Previously, all properties were added to filter tokens in their original form
