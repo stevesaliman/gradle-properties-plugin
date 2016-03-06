@@ -32,167 +32,15 @@ import org.gradle.testfixtures.ProjectBuilder
  *
  * @author Steven C. Saliman
  */
-class PropertiesPluginChangePropertyNameTest extends GroovyTestCase {
-	def parentProject = null;
-	def childProject = null;
-	def parentCommandProperties = null;
-	def childCommandProperties = null;
-
+class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
 	/**
 	 * Set up the test data.  This calls a helper method to create the projects
 	 * because we need to repeat the setup in one of the tests.
 	 */
 	public void setUp() {
-		createProjects(true)
+		createProjects()
+		setFileProperties(true, true)
 		copyFiles()
-	}
-
-	/**
-	 * Set up for each test. This will create a parent project with one child
-	 * project, and it will set the properties that would be set before the plugin
-	 * is applied.  These properties would be set by Gradle itself as it creates
-	 * projects from build.gradle files.  Gradle only handles properties in the
-	 * command line and the 3 gradle.properties file.
-	 */
-	public void createProjects(includeProjectProperties) {
-		// Create the parent project.
-		def parentProjectDir = new File('build/test/parentProject')
-		parentProject = ProjectBuilder
-						.builder()
-						.withName('parentProject')
-						.withProjectDir(parentProjectDir)
-						.build();
-		if ( includeProjectProperties ) {
-			parentProject.ext.parentProjectProperty = 'ParentProject.parentProjectValue'
-		}
-		parentProject.ext.parentEnvironmentProperty = 'ParentProject.parentEnvironmentValue'
-		parentProject.ext.childProjectProperty = 'ParentProject.childProjectValue'
-		parentProject.ext.childEnvironmentProperty = 'ParentProject.childEnvironmentValue'
-		parentProject.ext.homeProperty = 'Home.homeValue'
-		parentProject.ext.userProperty = 'Home.userValue'
-		parentCommandProperties = parentProject.gradle.startParameter.projectProperties
-
-		// Create the child project.
-		def childProjectDir = new File('build/test/parentProject/childProject')
-		childProject = ProjectBuilder
-						.builder()
-						.withName('childProject')
-						.withParent(parentProject)
-						.withProjectDir(childProjectDir)
-						.build();
-		if ( includeProjectProperties ) {
-			childProject.ext.parentProjectProperty = 'ParentProject.parentProjectValue'
-		}
-		childProject.ext.parentEnvironmentProperty = 'ParentProject.parentEnvironmentValue'
-		childProject.ext.childProjectProperty = 'ChildProject.childProjectValue'
-		childProject.ext.childEnvironmentProperty = 'ChildProject.childEnvironmentValue'
-		childProject.ext.homeProperty = 'Home.homeValue'
-		childProject.ext.userProperty = 'Home.userValue'
-		childCommandProperties = parentProject.gradle.startParameter.projectProperties
-
-		// Add the child to the parent.
-		parentProject.childProjects.put('child', childProject)
-	}
-
-	/**
-	 * Do the actual work of copying the test property files to the correct
-	 * locations within the project hierarchy
-	 */
-	def copyFiles() {
-		// Copy the files for the parent project.
-		def parentUserDir = parentProject.gradle.gradleUserHomeDir
-		def builder = new AntBuilder()
-		builder.copy(file:'src/test/resources/parent-project-gradle.properties',
-						tofile : "${parentProject.projectDir}/gradle.properties")
-		builder.copy(file:'src/test/resources/parent-env-test.properties',
-						tofile : "${parentProject.projectDir}/gradle-test.properties")
-		builder.copy(file:'src/test/resources/parent-env-local.properties',
-						tofile : "${parentProject.projectDir}/gradle-local.properties")
-		builder.copy(file:'src/test/resources/home-gradle.properties',
-						tofile : "${parentUserDir}/gradle.properties")
-		builder.copy(file:'src/test/resources/user-gradle.properties',
-						tofile : "${parentUserDir}/gradle-user.properties")
-		builder.copy(file:'src/test/resources/parent-env-local-sub.properties',
-						tofile : "${parentProject.projectDir}/gradle-properties/gradle-local.properties")
-
-		// copy the files for the child project.
-		def childUserDir = childProject.gradle.gradleUserHomeDir
-		builder.copy(file:'src/test/resources/child-project-gradle.properties',
-						tofile : "${childProject.projectDir}/gradle.properties")
-		builder.copy(file:'src/test/resources/child-env-test.properties',
-						tofile : "${childProject.projectDir}/gradle-test.properties")
-		builder.copy(file:'src/test/resources/child-env-local.properties',
-						tofile : "${childProject.projectDir}/gradle-local.properties")
-		builder.copy(file:'src/test/resources/home-gradle.properties',
-						tofile : "${childUserDir}/gradle.properties")
-		builder.copy(file:'src/test/resources/user-gradle.properties',
-						tofile : "${childUserDir}/gradle-user.properties")
-		builder.copy(file:'src/test/resources/child-env-local-sub.properties',
-						tofile : "${childProject.projectDir}/gradle-properties/gradle-local.properties")
-	}
-
-	/**
-	 * Helper method to set the properties that Gradle would have set for us
-	 * via the command line, system properties, and environment variables.
-	 * @param setEnvironmentProperties whether or not to set the environment
-	 *        properties
-	 * @param setSystemProperties whether or not to set the system properties
-	 * @param commandProperties a map of properties that should be added to the
-	 *        "command line" for our build.
-	 */
-	public void setNonFileProperties(boolean setEnvironmentProperties,
-	                                 boolean setSystemProperties,
-	                                 Map commandProperties) {
-		if ( setEnvironmentProperties ) {
-			SetEnv.setEnv([ 'ORG_GRADLE_PROJECT_environmentProperty' : 'Environment.environmentValue',
-							'ORG_GRADLE_PROJECT_systemProperty' : 'Environment.systemValue',
-							'ORG_GRADLE_PROJECT_commandProperty' :'Environment.commandValue'])
-			// Make sure the utility worked.
-			assertEquals('Failed to set ORG_GRADLE_PROJECT_environmentProperty',
-							'Environment.environmentValue',
-							System.getenv('ORG_GRADLE_PROJECT_environmentProperty'))
-			assertEquals('Failed to set ORG_GRADLE_PROJECT_systemProperty',
-							'Environment.systemValue',
-							System.getenv('ORG_GRADLE_PROJECT_systemProperty'))
-			assertEquals('Failed to set ORG_GRADLE_PROJECT_commandProperty',
-							'Environment.commandValue',
-							System.getenv('ORG_GRADLE_PROJECT_commandProperty'))
-		} else {
-			SetEnv.unsetEnv(['ORG_GRADLE_PROJECT_environmentProperty',
-							'ORG_GRADLE_PROJECT_systemProperty',
-							'ORG_GRADLE_PROJECT_commandProperty'])
-			// Make sure the utility worked.
-			assertNull('Failed to clear ORG_GRADLE_PROJECT_environmentProperty',
-							System.getenv('ORG_GRADLE_PROJECT_environmentProperty'))
-			assertNull('Failed to clear ORG_GRADLE_PROJECT_systemProperty',
-							System.getenv('ORG_GRADLE_PROJECT_systemProperty'))
-			assertNull('Failed to clear ORG_GRADLE_PROJECT_commandProperty',
-							System.getenv('ORG_GRADLE_PROJECT_commandProperty'))
-
-		}
-		if ( setSystemProperties ) {
-			System.setProperty('org.gradle.project.systemProperty', 'System.systemValue')
-			System.setProperty('org.gradle.project.commandProperty', 'System.commandValue')
-		} else {
-			System.clearProperty('org.gradle.project.systemProperty')
-			System.clearProperty('org.gradle.project.commandProperty')
-		}
-
-		// Apply command properties.  This means 2 things:
-		// 1 - Add each property to Gradle's list of command line arguments so that
-		//     the plugin will process them when the plugin is applied.
-		// 2 - Add the property to the project's existing properties since Gradle
-		//     would have already added them to the project before applying the
-		//     plugin.
-		if ( commandProperties != null ) {
-			commandProperties.each { key, value ->
-				parentProject
-				parentCommandProperties[key] = value
-				parentProject.ext[key] = value
-				childCommandProperties[key] = value
-				childProject.ext[key] = value
-			}
-		}
 	}
 
 	/**
@@ -236,6 +84,9 @@ class PropertiesPluginChangePropertyNameTest extends GroovyTestCase {
 		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', tokens['parentEnvironmentProperty'])
 		// dot notation
 		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', tokens['parent.environment.property'])
+
+		// Check System properties.
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', System.properties['parentEnvironmentProp'])
 	}
 
 	/**
@@ -316,6 +167,9 @@ class PropertiesPluginChangePropertyNameTest extends GroovyTestCase {
 		assertEquals('ParentEnvironmentSubLocal.parentEnvironmentValue', tokens['parentEnvironmentProperty'])
 		// dot notation
 		assertEquals('ParentEnvironmentSubLocal.parentEnvironmentValue', tokens['parent.environment.property'])
+
+		// Check System properties.
+		assertEquals('ParentEnvironmentSubLocal.parentEnvironmentValue', System.properties['parentEnvironmentProp'])
 	}
 
 	/**
@@ -348,6 +202,9 @@ class PropertiesPluginChangePropertyNameTest extends GroovyTestCase {
 		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', tokens['parentEnvironmentProperty'])
 		// dot notation
 		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', tokens['parent.environment.property'])
+
+		// Check System properties.
+		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', System.properties['parentEnvironmentProp'])
 	}
 
 	/**
@@ -404,6 +261,9 @@ class PropertiesPluginChangePropertyNameTest extends GroovyTestCase {
 		assertEquals('ParentEnvironmentTest.parentEnvironmentValue', tokens['parentEnvironmentProperty'])
 		// dot notation
 		assertEquals('ParentEnvironmentTest.parentEnvironmentValue', tokens['parent.environment.property'])
+
+		// Check System properties.
+		assertEquals('ParentEnvironmentTest.parentEnvironmentValue', System.properties['parentEnvironmentProp'])
 	}
 
 	/**
@@ -437,6 +297,9 @@ class PropertiesPluginChangePropertyNameTest extends GroovyTestCase {
 		assertEquals('Home.userValue', tokens['userProperty'])
 		// dot notation
 		assertEquals('Home.userValue', tokens['user.property'])
+
+		// Check System properties.
+		assertEquals('Home.userValue', System.properties['userProp'])
 	}
 
 	/**
@@ -493,5 +356,8 @@ class PropertiesPluginChangePropertyNameTest extends GroovyTestCase {
 		assertEquals('User.userValue', tokens['userProperty'])
 		// dot notation
 		assertEquals('User.userValue', tokens['user.property'])
+
+		// Check System properties.
+		assertEquals('User.userValue', System.properties['userProp'])
 	}
 }
