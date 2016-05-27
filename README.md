@@ -4,9 +4,17 @@ properties from the various properties files.  See the [CHANGELOG]
 (http://github.com/stevesaliman/gradle-properties-plugin/blob/master/CHANGELOG.md)
 for recent changes.
 
+The Properties plugin is designed to make it easier to work with properties that
+change from environment to environment, or client to client. It makes life
+easier for developers who are new to a project to configure and build,
+because properties for multiple environments can be stored with the project
+itself, reducing the number of external magic that needs to happen for a
+project to run. It makes life easier for experienced developers to create
+different configurations for different scenarios on their boxes.
+
 Gradle can add properties to your project in several ways, as documented in the
 Gradle [User Guide]
-(http://www.gradle.org/docs/current/userguide/tutorial_this_and_that.html).
+(https://docs.gradle.org/current/userguide/build_environment.html).
 Gradle uses these ways in a particular order, and the value of a property in 
 your project will be the value from the last thing that set the property.
 Gradle's order of processing is:
@@ -119,10 +127,11 @@ gradle-${environmentName}.properties in the project's root directory, and the
 ${gradleUserHomeDir}/gradle-${gradleUserName}.properties file to the list of
 files that can contain properties from which Java system properties can be set.
 
-Starting with plugin version 1.4.0, the plugin can also be applied to a Settings
-object by applying the plugin in the settings.gradle file.  This feature is
-still incubating, and its behavior can change in future releases, but for now,
-it processes files in the following order:
+Gradle plugins can also be applied to a Settings object by applying the plugin 
+in the settings.gradle file.  Gradle handles properties a little differently 
+when processing a settings.gradle file, so the plugin's behavior changes as 
+well.  When applied in a settings.gradle file, the plugin processes files in the
+following order:
 
 1. The gradle.properties file in the directory where settings.gradle is
    located.
@@ -135,13 +144,26 @@ it processes files in the following order:
 
 3. The files described in steps 5-9 for applying to a project.
 
-The Properties plugin is designed to make it easier to work with properties that
-change from environment to environment, or client to client. It makes life
-easier for developers who are new to a project to configure and build,
-because properties for multiple environments can be stored with the project
-itself, reducing the number of external magic that needs to happen for a
-project to run. It makes life easier for experienced developers to create
-different configurations for different scenarios on their boxes.
+Gradle technically allows plugins to be applied in an init.gradle file, but 
+Gradle recommends against it, because the init.gradle file is designed for 
+configuration and not plugin application.  If you really want to apply this plugin in the init.gradle file, you can do 
+it by wrapping it in an ```allprojects``` block like this:
+```
+initscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "net.saliman:gradle-properties-plugin:1.4.5"
+    }
+}
+allprojects {
+  apply plugin: net.saliman.gradle.plugin.properties.PropertiesPlugin
+}
+```
+Note that this example uses a class name instead of a plugin id.  This is to
+workaround a bug in Gradle that prevents plugins from being found by id inside
+an init.gradle file.
 
 # Why should I use it? #
 One of the challenges to building a project is that it often contains things
