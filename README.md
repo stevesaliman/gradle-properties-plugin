@@ -154,7 +154,7 @@ initscript {
         mavenCentral()
     }
     dependencies {
-        classpath "net.saliman:gradle-properties-plugin:1.4.5"
+        classpath "net.saliman:gradle-properties-plugin:1.4.6"
     }
 }
 allprojects {
@@ -224,7 +224,7 @@ build.gradle file:
 
 ```groovy
 plugins {
-  id 'net.saliman.properties' version '1.4.5'
+  id 'net.saliman.properties' version '1.4.6'
 }
 ```
 
@@ -237,7 +237,7 @@ buildscript {
 		mavenCentral()
 	}
 	dependencies {
-		classpath 'net.saliman:gradle-properties-plugin:1.4.5'
+		classpath 'net.saliman:gradle-properties-plugin:1.4.6'
 	}
 }
 

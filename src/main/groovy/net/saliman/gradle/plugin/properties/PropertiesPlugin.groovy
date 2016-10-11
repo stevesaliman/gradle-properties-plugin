@@ -181,6 +181,8 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 	 * when the plugin is applied.
 	 */
 	private doApply(pluginAware, propertyFileListBuilder) {
+		// We need to use pluginAware.ext.has and not pluginAware.hasProperty
+		// because we do not want to find properties in parent projects.
 		if ( !pluginAware.ext.has('propertiesPluginEnvironmentFileDirProperty' ) ) {
 			pluginAware.ext.propertiesPluginEnvironmentFileDirProperty = 'environmentFileDir'
 		}

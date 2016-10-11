@@ -1,3 +1,9 @@
+Changes for 1.4.6
+=================
+- Fixed a bug when applying the plugin in multi module builds.  Gradle's 
+  ```hasProperty``` method was finding properties in the parent project, so we
+  were not setting project.ext properties in child projects. (Issue #24)
+
 Changes for 1.4.5
 =================
 - Added support for setting system properties from properties in "environment" 
