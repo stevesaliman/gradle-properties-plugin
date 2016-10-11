@@ -32,7 +32,7 @@ sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
 // Release version that won't conflict with the bintray plugin
-def releaseVersion = "1.4.5"
+def releaseVersion = "1.4.6"
 group = "net.saliman"
 archivesBaseName = 'gradle-properties-plugin'
 version = releaseVersion
@@ -58,8 +58,9 @@ repositories {
 }
 
 dependencies {
-	compile localGroovy()
 	compile gradleApi()
+	compile localGroovy()
+	testCompile "junit:junit:4.12"
 	archives "org.apache.maven.wagon:wagon-ssh:2.2"
 	archives "org.apache.maven.wagon:wagon-ssh-external:2.2"
 }

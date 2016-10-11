@@ -181,25 +181,25 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 	 * when the plugin is applied.
 	 */
 	private doApply(pluginAware, propertyFileListBuilder) {
-		if ( !pluginAware.hasProperty('propertiesPluginEnvironmentFileDirProperty' ) ) {
+		if ( !pluginAware.ext.has('propertiesPluginEnvironmentFileDirProperty' ) ) {
 			pluginAware.ext.propertiesPluginEnvironmentFileDirProperty = 'environmentFileDir'
 		}
-		if ( !pluginAware.hasProperty('propertiesPluginEnvironmentNameProperty' ) ) {
+		if ( !pluginAware.ext.has('propertiesPluginEnvironmentNameProperty' ) ) {
 			pluginAware.ext.propertiesPluginEnvironmentNameProperty = 'environmentName'
 		}
-		if ( !pluginAware.hasProperty('propertiesPluginGradleUserNameProperty' ) ) {
+		if ( !pluginAware.ext.has('propertiesPluginGradleUserNameProperty' ) ) {
 			pluginAware.ext.propertiesPluginGradleUserNameProperty = 'gradleUserName'
 		}
 
 		// If the user hasn't set a property file directory, assume the project
 		// directory.
-		if ( !pluginAware.hasProperty(pluginAware.propertiesPluginEnvironmentFileDirProperty ) ) {
+		if ( !pluginAware.ext.has(pluginAware.propertiesPluginEnvironmentFileDirProperty ) ) {
 			pluginAware.ext."$pluginAware.propertiesPluginEnvironmentFileDirProperty" = '.'
 		}
 		def envFileDir = pluginAware."$pluginAware.propertiesPluginEnvironmentFileDirProperty"
 
 		// If the user hasn't set an environment, assume "local"
-		if ( !pluginAware.hasProperty(pluginAware.propertiesPluginEnvironmentNameProperty ) ) {
+		if ( !pluginAware.ext.has(pluginAware.propertiesPluginEnvironmentNameProperty ) ) {
 			pluginAware.ext."$pluginAware.propertiesPluginEnvironmentNameProperty" = 'local'
 		}
 		def envName = pluginAware."$pluginAware.propertiesPluginEnvironmentNameProperty"

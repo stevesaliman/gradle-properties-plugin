@@ -15,10 +15,6 @@
  *
  */
 package net.saliman.gradle.plugin.properties
-
-import org.gradle.api.GradleException
-import org.gradle.testfixtures.ProjectBuilder
-
 /**
  * The {@link PropertiesPluginParentProjectTest} class tests applying the
  * plugin with the standard {@code environmentName} and {@code gradleUserName}
@@ -52,6 +48,7 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
 	public void testApplyPluginByType() {
 		parentProject.apply plugin: net.saliman.gradle.plugin.properties.PropertiesPlugin
 		assertEquals('local', parentProject.environmentName)
+		assertEquals('local', parentProject.ext.environmentName)
 		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
 	}
 
@@ -195,6 +192,7 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
 		assertEquals('local', parentProject.myEnvironment)
 		// ... the environmentName should still be set ...
 		assertEquals('test', parentProject.environmentName)
+		assertEquals('test', parentProject.ext.environmentName)
 		// ... but the property values should come from the local file.
 		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
 
@@ -254,6 +252,7 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
 		assertEquals('test', parentProject.myEnvironment)
 		// ... the environmentName should still be set ...
 		assertEquals('dummy', parentProject.environmentName)
+		assertEquals('dummy', parentProject.ext.environmentName)
 		// ... but the property values should come from the local file.
 		assertEquals('ParentEnvironmentTest.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
 

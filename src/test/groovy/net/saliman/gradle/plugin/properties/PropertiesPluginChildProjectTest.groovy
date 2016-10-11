@@ -23,6 +23,14 @@ package net.saliman.gradle.plugin.properties
  * some more to it than the parent test because the parent test doesn't deal
  * with child properties or project inheritance.
  * <p>
+ * Each test also applies the plugin to the parent project before applying it
+ * to the child project.  This simulates what Gradle itself does, but also tests
+ * a fix for a plugin bug that was caused by the fact that some Gradle API
+ * methods inherit from parent projects, and others don't and we want to make
+ * sure child extension properties are set even if they existed in the parent.
+ * This is also why we test for {@code childProject.environmentName} (which
+ * inherits), and {@code childProject.ext.environmentName} (which doesn't).
+ * <p>
  * Note that we set properties in each test because we can't seem to clear a
  * property once it is set, and Gradle itself reads some of the properties
  * before we apply the plugin.
@@ -89,9 +97,11 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 		]
 		setNonFileProperties(true, true, commandArgs)
 
+		parentProject.apply plugin: 'properties'
 		childProject.apply plugin: 'properties'
 		def tokens = childProject.filterTokens;
-		assertEquals('test' , childProject.environmentName)
+		assertEquals('test', childProject.environmentName)
+		assertEquals('test', childProject.ext.environmentName)
 		assertEquals('user', childProject.gradleUserName)
 
 		assertEquals('ParentProject.parentProjectValue', childProject.parentProjectProperty)
@@ -156,9 +166,11 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 		]
 		setNonFileProperties(true, true, commandArgs)
 
+		parentProject.apply plugin: 'properties'
 		childProject.apply plugin: 'properties'
 		def tokens = childProject.filterTokens;
-		assertEquals('test' , childProject.environmentName)
+		assertEquals('test', childProject.environmentName)
+		assertEquals('test', childProject.ext.environmentName)
 		assertEquals('user', childProject.gradleUserName)
 
 		assertEquals('ParentProject.parentProjectValue', childProject.parentProjectProperty)
@@ -227,9 +239,11 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 		]
 		setNonFileProperties(true, false, commandArgs)
 
+		parentProject.apply plugin: 'properties'
 		childProject.apply plugin: 'properties'
 		def tokens = childProject.filterTokens;
-		assertEquals('test' , childProject.environmentName)
+		assertEquals('test', childProject.environmentName)
+		assertEquals('test', childProject.ext.environmentName)
 		assertEquals('user', childProject.gradleUserName)
 
 		assertEquals('ParentProject.parentProjectValue', childProject.parentProjectProperty)
@@ -298,9 +312,11 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 		]
 		setNonFileProperties(false, true, commandArgs)
 
+		parentProject.apply plugin: 'properties'
 		childProject.apply plugin: 'properties'
 		def tokens = childProject.filterTokens;
-		assertEquals('test' , childProject.environmentName)
+		assertEquals('test', childProject.environmentName)
+		assertEquals('test', childProject.ext.environmentName)
 		assertEquals('user', childProject.gradleUserName)
 
 		assertEquals('ParentProject.parentProjectValue', childProject.parentProjectProperty)
@@ -368,9 +384,11 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 		]
 		setNonFileProperties(true, true, commandArgs)
 
+		parentProject.apply plugin: 'properties'
 		childProject.apply plugin: 'properties'
 		def tokens = childProject.filterTokens;
-		assertEquals('test' , childProject.environmentName)
+		assertEquals('test', childProject.environmentName)
+		assertEquals('test', childProject.ext.environmentName)
 		assertFalse(childProject.hasProperty('gradleUserName'))
 
 		assertEquals('ParentProject.parentProjectValue', childProject.parentProjectProperty)
@@ -437,12 +455,13 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 		]
 		setNonFileProperties(true, true, commandArgs)
 
+		parentProject.apply plugin: 'properties'
 		childProject.apply plugin: 'properties'
 		def tokens = childProject.filterTokens;
-		assertEquals('local' , childProject.environmentName)
+		assertEquals('local', childProject.environmentName)
+		assertEquals('local', childProject.ext.environmentName)
 		assertEquals('user', childProject.gradleUserName)
 
-		assertEquals('local', childProject.environmentName)
 		assertEquals('ParentProject.parentProjectValue', childProject.parentProjectProperty)
 		assertEquals('ParentEnvironmentLocal.parentEnvironmentValue', childProject.parentEnvironmentProperty)
 		assertEquals('ChildProject.childProjectValue', childProject.childProjectProperty)
@@ -509,12 +528,13 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 		]
 		setNonFileProperties(true, true, commandArgs)
 
+		parentProject.apply plugin: 'properties'
 		childProject.apply plugin: 'properties'
 		def tokens = childProject.filterTokens;
-		assertEquals('local' , childProject.environmentName)
+		assertEquals('local', childProject.environmentName)
+		assertEquals('local', childProject.ext.environmentName)
 		assertEquals('user', childProject.gradleUserName)
 
-		assertEquals('local', childProject.environmentName)
 		assertEquals('ParentProject.parentProjectValue', childProject.parentProjectProperty)
 		assertEquals('ParentEnvironmentSubLocal.parentEnvironmentValue', childProject.parentEnvironmentProperty)
 		assertEquals('ChildProject.childProjectValue', childProject.childProjectProperty)
@@ -584,9 +604,11 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 		]
 		setNonFileProperties(true, true, commandArgs)
 
+		parentProject.apply plugin: 'properties'
 		childProject.apply plugin: 'properties'
 		def tokens = childProject.filterTokens;
-		assertEquals('local' , childProject.environmentName)
+		assertEquals('local', childProject.environmentName)
+		assertEquals('local', childProject.ext.environmentName)
 		assertFalse(childProject.hasProperty('gradleUserName'))
 
 		assertEquals('ParentProject.parentProjectValue', childProject.parentProjectProperty)
@@ -649,6 +671,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 		setNonFileProperties(true, true, commandArgs)
 
 		try {
+			// Only apply the child because we want to make sure the error happens on
+			// the child project.
 			childProject.apply plugin: 'properties'
 			fail("We should have gotten an error when we're missing a user file.")
 		} catch ( Exception e) {
@@ -676,9 +700,11 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 		]
 		setNonFileProperties(true, true, commandArgs)
 
+		parentProject.apply plugin: 'properties'
 		childProject.apply plugin: 'properties'
 		def tokens = childProject.filterTokens;
-		assertEquals('local' , childProject.environmentName)
+		assertEquals('local', childProject.environmentName)
+		assertEquals('local', childProject.ext.environmentName)
 		assertEquals('user', childProject.gradleUserName)
 
 		assertEquals('ParentProject.parentProjectValue', childProject.parentProjectProperty)
@@ -751,9 +777,11 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 		]
 		setNonFileProperties(true, true, commandArgs)
 
+		parentProject.apply plugin: 'properties'
 		childProject.apply plugin: 'properties'
 		def tokens = childProject.filterTokens;
-		assertEquals('test' , childProject.environmentName)
+		assertEquals('test', childProject.environmentName)
+		assertEquals('test', childProject.ext.environmentName)
 		assertEquals('user', childProject.gradleUserName)
 
 		assertEquals('ParentProject.parentProjectValue', childProject.parentProjectProperty)
@@ -827,9 +855,18 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 		]
 		setNonFileProperties(true, true, commandArgs)
 
+		// We shouldn't be able to apply to the parent, but the child should run
+		// just fine.
+		try {
+			parentProject.apply plugin: 'properties'
+			fail("We should have gotten an error when we're missing a parent environment file.")
+		} catch ( Exception e) {
+			// this was expected.
+		}
 		childProject.apply plugin: 'properties'
 		def tokens = childProject.filterTokens;
-		assertEquals('test' , childProject.environmentName)
+		assertEquals('test', childProject.environmentName)
+		assertEquals('test', childProject.ext.environmentName)
 		assertEquals('user', childProject.gradleUserName)
 
 		assertEquals('ParentProject.parentProjectValue', childProject.parentProjectProperty)
@@ -897,6 +934,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 		setNonFileProperties(true, true, commandArgs)
 
 		try {
+			// Only apply the child because we want to make sure the error happens on
+			// the child project.
 			childProject.apply plugin: 'properties'
 			fail("We should have gotten an error when we're missing an environment file.")
 		} catch ( Exception e) {
@@ -928,9 +967,11 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 		]
 		setNonFileProperties(true, true, commandArgs)
 
+		parentProject.apply plugin: 'properties'
 		childProject.apply plugin: 'properties'
 		def tokens = childProject.filterTokens;
-		assertEquals('local' , childProject.environmentName)
+		assertEquals('local', childProject.environmentName)
+		assertEquals('local', childProject.ext.environmentName)
 		assertEquals('user', childProject.gradleUserName)
 
 		assertEquals('ParentProject.parentProjectValue', childProject.parentProjectProperty)
@@ -1003,9 +1044,11 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 		]
 		setNonFileProperties(true, true, commandArgs)
 
+		parentProject.apply plugin: 'properties'
 		childProject.apply plugin: 'properties'
 		def tokens = childProject.filterTokens;
-		assertEquals('local' , childProject.environmentName)
+		assertEquals('local', childProject.environmentName)
+		assertEquals('local', childProject.ext.environmentName)
 		assertEquals('user', childProject.gradleUserName)
 
 		assertFalse("We shouldn't have a parent project property", childProject.hasProperty('parentProjectProperty'))
@@ -1075,9 +1118,11 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 		]
 		setNonFileProperties(true, true, commandArgs)
 
+		parentProject.apply plugin: 'properties'
 		childProject.apply plugin: 'properties'
 		def tokens = childProject.filterTokens;
-		assertEquals('test' , childProject.environmentName)
+		assertEquals('test', childProject.environmentName)
+		assertEquals('test', childProject.ext.environmentName)
 		assertEquals('user', childProject.gradleUserName)
 
 		assertEquals('ParentProject.parentProjectValue', childProject.parentProjectProperty)
@@ -1155,9 +1200,11 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 		]
 		setNonFileProperties(true, true, commandArgs)
 
+		parentProject.apply plugin: 'properties'
 		childProject.apply plugin: 'properties'
 		def tokens = childProject.filterTokens;
-		assertEquals('local' , childProject.environmentName)
+		assertEquals('local', childProject.environmentName)
+		assertEquals('local', childProject.ext.environmentName)
 		assertEquals('user', childProject.gradleUserName)
 
 		assertFalse("We shouldn't have a parent project property", childProject.hasProperty('parentProjectProperty'))

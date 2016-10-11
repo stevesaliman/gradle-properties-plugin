@@ -83,6 +83,7 @@ class PropertiesPluginParentProjectTest extends BasePluginTest {
 		parentProject.apply plugin: 'properties'
 		def tokens = parentProject.filterTokens
 		assertEquals('local', parentProject.environmentName)
+		assertEquals('local', parentProject.ext.environmentName)
 
 		assertEquals('Command.upperValue', parentProject.UPPER_PROPERTY)
 		def testFilter = tokens['UPPER_PROPERTY']
@@ -111,6 +112,7 @@ class PropertiesPluginParentProjectTest extends BasePluginTest {
 		parentProject.apply plugin: 'properties'
 		def tokens = parentProject.filterTokens
 		assertEquals('local', parentProject.environmentName)
+		assertEquals('local', parentProject.ext.environmentName)
 
 		assertEquals('Command.commandValue', parentProject.commandProperty)
 		def testFilter = tokens['commandProperty']
@@ -144,6 +146,7 @@ class PropertiesPluginParentProjectTest extends BasePluginTest {
 		parentProject.apply plugin: 'properties'
 		def tokens = parentProject.filterTokens
 		assertEquals('local', parentProject.environmentName)
+		assertEquals('local', parentProject.ext.environmentName)
 		assertEquals('User.userValue', parentProject.userProperty)
 
 		def testFilter = tokens['userProperty']
@@ -173,6 +176,7 @@ class PropertiesPluginParentProjectTest extends BasePluginTest {
 		def tokens = parentProject.filterTokens
 
 		assertEquals('local', parentProject.environmentName)
+		assertEquals('local', parentProject.ext.environmentName)
 		assertEquals('Home.userValue', parentProject.userProperty)
 		def testFilter = tokens['userProperty']
 		assertEquals('Home.userValue', testFilter)
@@ -203,6 +207,7 @@ class PropertiesPluginParentProjectTest extends BasePluginTest {
 		def tokens = parentProject.filterTokens
 
 		assertEquals('local', parentProject.environmentName)
+		assertEquals('local', parentProject.ext.environmentName)
 
 		assertEquals('Home.homeValue', parentProject.homeProperty)
 		def testFilter = tokens['homeProperty']
@@ -234,7 +239,8 @@ class PropertiesPluginParentProjectTest extends BasePluginTest {
 
 		parentProject.apply plugin: 'properties'
 		def tokens = parentProject.filterTokens
-		assertEquals('local' , parentProject.environmentName)
+		assertEquals('local', parentProject.environmentName)
+		assertEquals('local', parentProject.ext.environmentName)
 		assertEquals('user', parentProject.gradleUserName)
 
 		assertEquals('ParentEnvironmentLocal.childEnvironmentValue', parentProject.childEnvironmentProperty)
@@ -277,7 +283,8 @@ class PropertiesPluginParentProjectTest extends BasePluginTest {
 
 		parentProject.apply plugin: 'properties'
 		def tokens = parentProject.filterTokens
-		assertEquals('local' , parentProject.environmentName)
+		assertEquals('local', parentProject.environmentName)
+		assertEquals('local', parentProject.ext.environmentName)
 		assertEquals('user', parentProject.gradleUserName)
 
 		assertEquals('ParentEnvironmentSubLocal.childEnvironmentValue', parentProject.childEnvironmentProperty)
@@ -319,6 +326,7 @@ class PropertiesPluginParentProjectTest extends BasePluginTest {
 		parentProject.apply plugin: 'properties'
 		def tokens = parentProject.filterTokens
 		assertEquals('test', parentProject.environmentName)
+		assertEquals('test', parentProject.ext.environmentName)
 		assertEquals('user', parentProject.gradleUserName)
 
 		assertEquals('ParentEnvironmentTest.childEnvironmentValue', parentProject.childEnvironmentProperty)
@@ -358,6 +366,7 @@ class PropertiesPluginParentProjectTest extends BasePluginTest {
 		parentProject.apply plugin: 'properties'
 		def tokens = parentProject.filterTokens
 		assertEquals('local', parentProject.environmentName)
+		assertEquals('local', parentProject.ext.environmentName)
 		assertEquals('user', parentProject.gradleUserName)
 
 		assertEquals('ParentEnvironmentLocal.childProjectValue', parentProject.childProjectProperty)
@@ -401,6 +410,7 @@ class PropertiesPluginParentProjectTest extends BasePluginTest {
 		parentProject.apply plugin: 'properties'
 		def tokens = parentProject.filterTokens
 		assertEquals('local', parentProject.environmentName)
+		assertEquals('local', parentProject.ext.environmentName)
 		assertFalse(parentProject.hasProperty('gradleUserName'))
 
 		assertEquals('ParentProject.parentProjectValue', parentProject.parentProjectProperty)
@@ -492,6 +502,7 @@ class PropertiesPluginParentProjectTest extends BasePluginTest {
 		parentProject.apply plugin: 'properties'
 		def tokens = parentProject.filterTokens
 		assertEquals('local', parentProject.environmentName)
+		assertEquals('local', parentProject.ext.environmentName)
 		assertEquals('user', parentProject.gradleUserName)
 
 		assertEquals('ParentProject.parentProjectValue', parentProject.parentProjectProperty)
@@ -561,6 +572,7 @@ class PropertiesPluginParentProjectTest extends BasePluginTest {
 		parentProject.apply plugin: 'properties'
 		def tokens = parentProject.filterTokens
 		assertEquals('local', parentProject.environmentName)
+		assertEquals('local', parentProject.ext.environmentName)
 		assertEquals('user', parentProject.gradleUserName)
 
 		assertEquals('ParentProject.parentProjectValue', parentProject.parentProjectProperty)
@@ -657,6 +669,7 @@ class PropertiesPluginParentProjectTest extends BasePluginTest {
 		parentProject.apply plugin: 'properties'
 		def tokens = parentProject.filterTokens
 		assertEquals('local', parentProject.environmentName)
+		assertEquals('local', parentProject.ext.environmentName)
 		assertEquals('user', parentProject.gradleUserName)
 
 		assertFalse("We shouldn't have a parent project property", parentProject.hasProperty('parentProjectProperty'))
