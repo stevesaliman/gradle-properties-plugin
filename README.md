@@ -19,12 +19,12 @@ Gradle uses these ways in a particular order, and the value of a property in
 your project will be the value from the last thing that set the property.
 Gradle's order of processing is:
 
-1. The gradle.properties file in the parent project's directory, if the project
+1. The `gradle.properties` file in the parent project's directory, if the project
 is a module of a multi-project build.
 
-2. The gradle.properties file in the project directory
+2. The `gradle.properties` file in the project directory
 
-3. The gradle.properties file in the user's ${gradleUserHomeDir}/.gradle
+3. The `gradle.properties` file in the user's ${gradleUserHomeDir}/.gradle
 directory.
 
 4. Environment variables starting with ```ORG_GRADLE_PROJECT_```. For example,
@@ -43,34 +43,34 @@ environment, and the other is for properties that are common to a user (or
 client), but change from user to user (or client to client).  The order of
 execution for the properties plugin is:
 
-1. The gradle.properties file in the parent project's directory, if the project
+1. The `gradle.properties` file in the parent project's directory, if the project
 is a module of a multi-project build.
 
-2. The gradle-${environmentName}.properties file in the parent project's
+2. The `gradle-${environmentName}.properties` file in the parent project's
 directory, if the project is a module of a multi-project build. If no
 environment is specified, the plugin will assume an environment name of "local".
-We strongly recommend adding gradle-local.properties to the .gitignore file of
+We *strongly* recommend adding `gradle-local.properties` to the `.gitignore` file of
 the project so that developers' local configurations don't interfere with each
 other.
 
-3. The gradle.properties file in the project directory
+3. The `gradle.properties` file in the project directory
 
-4. The gradle-${environmentName}.properties file in the project directory.
+4. The `gradle-${environmentName}.properties` file in the project directory.
 if no environment is specified, the plugin will assume an environment name of
-"local".  We strongly recommend adding gradle-local.properties to the .gitignore
+"local".  We *strongly* recommend adding `gradle-local.properties` to the `.gitignore`
 file of the project so that developers' local configurations don't interfere
 with each other.
 
-5. The gradle.properties file in the user's ${gradleUserHomeDir}
+5. The `gradle.properties` file in the user's ${gradleUserHomeDir}
 directory. Properties in this file are generally things that span projects, or
 shouldn't be checked into a repository, such as user credentials, etc.
 
 6. If the ${gradleUserName} property is set, the properties plugin will load
-properties from ${gradleUserHomeDir}/gradle-${gradleUserName}.properties.  This
+properties from ${gradleUserHomeDir}/`gradle-${gradleUserName}.properties`.  This
 file is useful for cases when you need to build for a different user or client
 and you have properties that span projects.  For example you might have several
 projects that have pages with a customized banner.  The contents of the banner
-change from client to client.  The gradle-${gradleUserName}.properties file
+change from client to client.  The `gradle-${gradleUserName}.properties` file
 is a great way to put the client's custom text into a single file per client,
 and specify at build time which client's banners should be used.
 
@@ -133,13 +133,13 @@ when processing a settings.gradle file, so the plugin's behavior changes as
 well.  When applied in a settings.gradle file, the plugin processes files in the
 following order:
 
-1. The gradle.properties file in the directory where settings.gradle is
+1. The `gradle.properties` file in the directory where `settings.gradle` is
    located.
 
-2. The gradle-${environmentName}.properties file in the directory where
-   settings.gradle is located. If no environment is specified, the plugin will
+2. The `gradle-${environmentName}.properties` file in the directory where
+   `settings.gradle` is located. If no environment is specified, the plugin will
    assume an environment name of "local".  We strongly recommend adding
-   gradle-local.properties to the .gitignore file of the project so that
+   `gradle-local.properties` to the `.gitignore` file of the project so that
    developers' local configurations don't interfere with each other.
 
 3. The files described in steps 5-9 for applying to a project.
@@ -148,7 +148,7 @@ Gradle technically allows plugins to be applied in an init.gradle file, but
 Gradle recommends against it, because the init.gradle file is designed for 
 configuration and not plugin application.  If you really want to apply this plugin in the init.gradle file, you can do 
 it by wrapping it in an ```allprojects``` block like this:
-```
+```gradle
 initscript {
     repositories {
         mavenCentral()
