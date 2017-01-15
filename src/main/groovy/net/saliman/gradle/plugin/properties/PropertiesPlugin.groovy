@@ -168,7 +168,7 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 			// Register a task listener that adds the property checking helper methods.
 			registerTaskListener(pluginAware)
 		} else {
-			throw new IllegalArgumentException("${pluginAware.getClass()} is currently not supported as apply target, please report if you need it")
+			throw new IllegalArgumentException("${pluginAware.getClass()} is currently not supported as an apply target, please report if you need it")
 		}
 	}
 
