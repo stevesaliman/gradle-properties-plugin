@@ -1,7 +1,6 @@
 # Gradle Properties Plugin #
 The Properties plugin is a useful plugin that changes the way Gradle loads
-properties from the various properties files.  See the [CHANGELOG]
-(http://github.com/stevesaliman/gradle-properties-plugin/blob/master/CHANGELOG.md)
+properties from the various properties files.  See the [CHANGELOG](http://github.com/stevesaliman/gradle-properties-plugin/blob/master/CHANGELOG.md)
 for recent changes.
 
 The Properties plugin is designed to make it easier to work with properties that
@@ -13,8 +12,7 @@ project to run. It makes life easier for experienced developers to create
 different configurations for different scenarios on their boxes.
 
 Gradle can add properties to your project in several ways, as documented in the
-Gradle [User Guide]
-(https://docs.gradle.org/current/userguide/build_environment.html).
+Gradle [User Guide](https://docs.gradle.org/current/userguide/build_environment.html).
 Gradle uses these ways in a particular order, and the value of a property in 
 your project will be the value from the last thing that set the property.
 Gradle's order of processing is:
@@ -117,8 +115,8 @@ for you.  See Gradle's documentation for the ```copy``` task for more
 information on filtering.
 
 Gradle can also set a Java system property from the properties it sees in the 
-various property files.  The Gradle [User Guide]
-https://docs.gradle.org/current/userguide/build_environment.html describes the
+various property files.  The Gradle [User Guide](https://docs.gradle.org/current/userguide/build_environment.html)
+describes the
 process in more detail, but basically, properties that start with "systemProp."
 will be converted into Java system properties, but only if they are in the 
 ```gradle.properties``` file in either the root project's directory or the 
