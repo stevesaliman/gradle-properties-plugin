@@ -1,3 +1,18 @@
+Changes for 1.5.0
+=================
+- Added a `propertiesPluginIgnoreMissingEnvironment` to override the plugin's
+  default behavior of failing the build when an environment specific file can't
+  be found.  This is most when you only need to override properties in some, 
+  but not all, environments and you don't want to define a bunch of empty files. 
+  It is also handy when you are using Spring Boot for project properties, but
+  still use Gradle for support tasks, and you want to use the
+  `requiredProperties` method, or in cases where you only need to override
+  properties in some, but not all
+ 
+- Dropped support for Java 6 and Java 7.
+
+- Updated the Gradle wrapper to 4.10.3.  Gradle 5 is coming soon.
+  
 Changes for 1.4.6
 =================
 - Fixed a bug when applying the plugin in multi module builds.  Gradle's 

@@ -133,6 +133,11 @@ import org.slf4j.LoggerFactory
  * value is the property's value. The original camel case name will also be
  * added as token.
  * <p>
+ * By default, this plugin fails the build if you specify an environment, but
+ * no file exists for that environment.  You can use the
+ * {@code propertiesPluginIgnoreMissingEnvFile} property to override this
+ * behavior.
+ * <p>
  * Finally, the properties plugin also adds some properties to every task in
  * your build:
  * <p>{@code requiredProperty} and {@code requiredProperties} can be used to
@@ -192,6 +197,9 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 		if ( !pluginAware.ext.has('propertiesPluginGradleUserNameProperty' ) ) {
 			pluginAware.ext.propertiesPluginGradleUserNameProperty = 'gradleUserName'
 		}
+		if ( !pluginAware.ext.has('propertiesPluginIgnoreMissingEnvFile') ) {
+			pluginAware.ext.propertiesPluginIgnoreMissingEnvFile = 'false'
+		}
 
 		// If the user hasn't set a property file directory, assume the project
 		// directory.
@@ -227,9 +235,16 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 		processEnvironmentProperties(pluginAware)
 		processSystemProperties(pluginAware)
 		processCommandProperties(pluginAware)
-		// Make sure we got at least one environment file if we are not in the local environment.
+		// Make sure we got at least one environment file if we are not in the
+		// local environment.
 		if ( envName != 'local' && !foundEnvFile ) {
-			throw new FileNotFoundException("No environment files were found for the '$envName' environment")
+			// Fail the build unless the propertiesPluginIgnoreMissingEnvFile
+			// property is set to true.
+			if ( Boolean.parseBoolean(pluginAware.ext.propertiesPluginIgnoreMissingEnvFile) ) {
+				logger.warn("WARNING: No environment files were found for the '$envName' environment")
+			} else {
+				throw new FileNotFoundException("No environment files were found for the '$envName' environment")
+			}
 		}
 	}
 

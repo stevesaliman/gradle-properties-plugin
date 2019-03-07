@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2016 Steven C. Saliman
+ * Copyright 2012-2019 Steven C. Saliman
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
 package net.saliman.gradle.plugin.properties
 
 import org.gradle.testfixtures.ProjectBuilder
+
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertNull
 
 /**
  * Test class for parent projects that apply Properties plugin.  In a multi
@@ -38,14 +41,14 @@ import org.gradle.testfixtures.ProjectBuilder
  *
  * @author Steven C. Saliman
  */
-class BasePluginTest extends GroovyTestCase {
+class BasePluginTest {
 	def plugin = new PropertiesPlugin()
-	def parentProject = null;
-	def childProject = null;
-	def parentTask = null;
-	def childTask = null;
-	def parentCommandProperties = null;
-	def childCommandProperties = null;
+	def parentProject = null
+	def childProject = null
+	def parentTask = null
+	def childTask = null
+	def parentCommandProperties = null
+	def childCommandProperties = null
 
 	/**
 	 * helper method to create the projects and tasks used in the unit tests.
@@ -272,13 +275,5 @@ class BasePluginTest extends GroovyTestCase {
 				tofile: "${childUserDir}/gradle-user.properties")
 		builder.copy(file: 'src/test/resources/child-env-local-sub.properties',
 				tofile: "${childProject.projectDir}/gradle-properties/gradle-local.properties")
-	}
-
-	/**
-	 * If we don't have at least one test here, we'll get warnings, so define
-	 * a test that always passes.
-	 */
-	public void testNothing() {
-
 	}
 }

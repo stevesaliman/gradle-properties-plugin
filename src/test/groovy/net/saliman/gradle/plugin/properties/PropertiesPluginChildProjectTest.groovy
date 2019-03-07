@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2016 Steven C. Saliman
+ * Copyright 2012-2019 Steven C. Saliman
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,15 @@
  *
  */
 package net.saliman.gradle.plugin.properties
+
+import org.junit.Before
+import org.junit.Test
+
+import static org.gradle.internal.impldep.org.testng.Assert.assertNull
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertFalse
+import static org.junit.Assert.fail
+
 /**
  * Test class for child projects that apply Properties plugin.  In a multi
  * project build, parent and child projects use slightly different files.  A
@@ -47,7 +56,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	 * Set up the test data.  This calls a helper method to create the projects
 	 * because we need to repeat the setup in one of the tests.
 	 */
-	public void setUp() {
+	@Before
+	void setUp() {
 		createProjects()
 		setFileProperties(true, true)
 		copyFiles()
@@ -56,7 +66,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	/**
 	 * Test the CheckProperty method when the property is present.
 	 */
-	public void testCheckPropertyPresent() {
+	@Test
+	void checkPropertyPresent() {
 		childProject.ext.someProperty = 'someValue'
 		// we succeed if we don't get an exception.
 		plugin.checkProperty(childProject, 'someProperty', childTask, 'someMethod')
@@ -68,12 +79,9 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	/**
 	 * Test the checkProperty method when the property is missing.
 	 */
-	public void testCheckPropertyMissing() {
-		// we succeed if we don't get an exception.
-		shouldFail(MissingPropertyException) {
-			plugin.checkProperty(childProject, 'someProperty', childTask, 'someMethod')
-		}
-
+	@Test(expected = MissingPropertyException.class)
+	void checkPropertyMissing() {
+		plugin.checkProperty(childProject, 'someProperty', childTask, 'someMethod')
 	}
 
 	// This set of tests focuses on the different ways the user can invoke the
@@ -85,7 +93,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	 * variables are set, system properties are set, and we have a command line
 	 * value.
 	 */
-	public void testApplyPluginWithAll() {
+	@Test
+	void applyPluginWithAll() {
 		// simulate a "-PcommandProperty=Command.commandValue
 		// -PsystemProp.commandProp=commandValue -PenvironmentName=test
 		// -PgradleUserName=user" command line
@@ -158,7 +167,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	 * is the same as the last test, except that the command property should
 	 * come from the system properties.
 	 */
-	public void testApplyPluginNoCommandLine() {
+	@Test
+	void applyPluginNoCommandLine() {
 		// simulate a "-PenvironmentName=test -PgradleUserName=user" command line
 		def commandArgs = [
 						environmentName: 'test',
@@ -227,7 +237,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	 * case, the property normally set from system properties will inherit the
 	 * value from the environment variables.
 	 */
-	public void testApplyPluginNoSystemProperties() {
+	@Test
+	void applyPluginNoSystemProperties() {
 		// simulate a "-PcommandProperty=Command.commandValue
 		// -PsystemProp.commandProp=commandValue  -PenvironmentName=test
 		// -PgradleUserName=user" command line
@@ -300,7 +311,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	 * case, the property that is normally set by environment variables will
 	 * inherit the value from the User file.
 	 */
-	public void testApplyPluginNoEnvironmentVariables() {
+	@Test
+	void applyPluginNoEnvironmentVariables() {
 		// simulate a "-PcommandProperty=Command.commandValue
 		// -PsystemProp.commandProp=commandValue -PenvironmentName=test
 		// -PgradleUserName=user" command line
@@ -373,7 +385,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	 * that usually comes from the user file will inherit the value from the
 	 * home file.
 	 */
-	public void testApplyNoUser() {
+	@Test
+	void applyNoUser() {
 		// simulate a "-PcommandProperty=Command.commandValue
 		// -PsystemProp.commandProp=commandValue -PenvironmentName=test" command
 		// line
@@ -444,7 +457,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	 * This will also verify that the child environment files override the
 	 * parent environment files.
 	 */
-	public void testApplyUseDefaultEnvironmentFile() {
+	@Test
+	void applyUseDefaultEnvironmentFile() {
 		// simulate a "-PcommandProperty=Command.commandValue
 		// -PsystemProp.commandProp=commandValue -PgradleUserName=user" command
 		// line
@@ -516,7 +530,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	 * directory.  This will also verify that the child environment files
 	 * override the parent environment files.
 	 */
-	public void testApplyUseDefaultEnvironmentFileInDirectory() {
+	@Test
+	void applyUseDefaultEnvironmentFileInDirectory() {
 		// simulate a "-PcommandProperty=Command.commandValue
 		// -PsystemProp.commandProp=commandValue -PgradleUserName=user
 		// -PenvironmentFileDir=gradle-properties" command line
@@ -590,7 +605,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	 * Test applying the plugin when we have no user file, but we didn't specify
 	 * a user.  This is not an error.
 	 */
-	public void testApplyMissingUnspecifiedUserFile() {
+	@Test
+	void applyMissingUnspecifiedUserFile() {
 		def propFile = new File("${childProject.gradle.gradleUserHomeDir}/gradle-user.properties")
 		propFile.delete()
 		assertFalse('Failed to delete user file', propFile.exists())
@@ -660,7 +676,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	 * Test applying the plugin when we have no user file for a specified user.
 	 * This should produce an error
 	 */
-	public void testApplyMissingSpecifiedUserFile() {
+	@Test
+	void applyMissingSpecifiedUserFile() {
 		// simulate a "-PcommandProperty=Command.commandValue
 		// -PsystemProp.commandProp=commandValue -PgradleUserName=dummy" command
 		// line
@@ -685,7 +702,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	 * error, but the home property should be inherited from the child environment
 	 * file.
 	 */
-	public void testApplyMissingHomeFile() {
+	@Test
+	void applyMissingHomeFile() {
 		def propFile = new File("${childProject.gradle.gradleUserHomeDir}/gradle.properties")
 		propFile.delete()
 		assertFalse('Failed to delete home file', propFile.exists())
@@ -761,7 +779,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	 * usually set in the child environment file should come from the child
 	 * project file, which has precedence.
 	 */
-	public void testApplyMissingChildEnvFile() {
+	@Test
+	void applyMissingChildEnvFile() {
 		def propFile = new File("${childProject.projectDir}/gradle-test.properties")
 		propFile.delete()
 		assertFalse('Failed to delete child test file', propFile.exists())
@@ -839,7 +858,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	 * would have been set in the parent environment file will have the value from
 	 * the parent project file.
 	 */
-	public void testApplyMissingParentEnvFile() {
+	@Test
+	void applyMissingParentEnvFile() {
 		def propFile = new File("${parentProject.projectDir}/gradle-test.properties")
 		propFile.delete()
 		assertFalse('Failed to delete parent test file', propFile.exists())
@@ -923,13 +943,14 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	 * we specify an environment file - in other words, we specified an invalid
 	 * environment.  This should be an error.
 	 */
-	public void testApplyMissingSpecifiedEnvFile() {
+	@Test
+	void applyMissingSpecifiedEnvFile() {
 		// simulate a "-PcommandProperty=Command.commandValue
 		// -PenvironmentName=dummy -PgradleUserName=user" command line
 		def commandArgs = [
 						commandProperty: 'Command.commandValue',
-						environmentName: 'test',
-						gradleUserName: 'dummy'
+						environmentName: 'dummy',
+						gradleUserName: 'user'
 		]
 		setNonFileProperties(true, true, commandArgs)
 
@@ -944,12 +965,88 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	}
 
 	/**
+	 * Test what happens when we have no environment file in either project, but
+	 * we specify an environment file - in other words, we specified an invalid
+	 * environment.  This should act the same as the local environment, except
+	 * that we'll get "local" values from the default file.
+	 */
+	@Test
+	void applyIgnoreMissingSpecifiedEnvFile() {
+		// simulate a "-PpropertiesPluginIgnoreMissingEnvFile=true
+		// -PcommandProperty=Command.commandValue
+		// -PenvironmentName=dummy -PgradleUserName=user" command line
+		def commandArgs = [
+				propertiesPluginIgnoreMissingEnvFile: 'true',
+				commandProperty: 'Command.commandValue',
+				environmentName: 'dummy',
+				gradleUserName: 'user'
+		]
+		setNonFileProperties(true, true, commandArgs)
+
+		// Only apply the child because we're only concerned with the child in
+		// this test.
+		childProject.apply plugin: 'properties'
+		assertEquals('dummy', childProject.environmentName)
+		assertEquals('dummy', childProject.ext.environmentName)
+		assertEquals('user', childProject.gradleUserName)
+
+		assertEquals('ParentProject.parentProjectValue', childProject.parentProjectProperty)
+		assertEquals('ParentProject.parentEnvironmentValue', childProject.parentEnvironmentProperty)
+		assertEquals('ChildProject.childProjectValue', childProject.childProjectProperty)
+		assertEquals('ChildProject.childEnvironmentValue', childProject.childEnvironmentProperty)
+		assertEquals('Home.homeValue', childProject.homeProperty)
+		assertEquals('User.userValue', childProject.userProperty)
+		assertEquals('Environment.environmentValue', childProject.environmentProperty)
+		assertEquals('System.systemValue', childProject.systemProperty)
+		assertEquals('Command.commandValue', childProject.commandProperty)
+
+		// 22 that we're checking, 14 from system properties, and 2 from our
+		// setting of the override property.
+		def tokens = childProject.filterTokens;
+		assertEquals(38, tokens.size())
+		// camel case notation
+		assertEquals('user', tokens['gradleUserName'])
+		assertEquals('ParentProject.parentProjectValue', tokens['parentProjectProperty'])
+		assertEquals('ParentProject.parentEnvironmentValue', tokens['parentEnvironmentProperty'])
+		assertEquals('ChildProject.childProjectValue', tokens['childProjectProperty'])
+		assertEquals('ChildProject.childEnvironmentValue', tokens['childEnvironmentProperty'])
+		assertEquals('Home.homeValue', tokens['homeProperty'])
+		assertEquals('User.userValue', tokens['userProperty'])
+		assertEquals('Environment.environmentValue', tokens['environmentProperty'])
+		assertEquals('System.systemValue', tokens['systemProperty'])
+		assertEquals('Command.commandValue', tokens['commandProperty'])
+		// dot notation
+		assertEquals('user', tokens['gradle.user.name'])
+		assertEquals('ParentProject.parentProjectValue', tokens['parent.project.property'])
+		assertEquals('ParentProject.parentEnvironmentValue', tokens['parent.environment.property'])
+		assertEquals('ChildProject.childProjectValue', tokens['child.project.property'])
+		assertEquals('ChildProject.childEnvironmentValue', tokens['child.environment.property'])
+		assertEquals('Home.homeValue', tokens['home.property'])
+		assertEquals('User.userValue', tokens['user.property'])
+		assertEquals('Environment.environmentValue', tokens['environment.property'])
+		assertEquals('System.systemValue', tokens['system.property'])
+		assertEquals('Command.commandValue', tokens['command.property'])
+
+		// Check the system properties. Remember, system properties are not
+		// set from command line properties, and values from child project
+		// files are ignored.
+		assertEquals('ParentProject.parentProjectValue', System.properties['parentProjectProp'])
+		assertEquals('ParentProject.parentEnvironmentValue', System.properties['parentEnvironmentProp'])
+		assertEquals('ParentProject.childProjectValue', System.properties['childProjectProp'])
+		assertEquals('ParentProject.childEnvironmentValue', System.properties['childEnvironmentProp'])
+		assertEquals('Home.homeValue', System.properties['homeProp'])
+		assertEquals('User.userValue', System.properties['userProp'])
+		assertEquals('User.commandValue', System.properties['commandProp'])
+	}
+
+	/**
 	 * Test what happens when we have no environment file in either project,
 	 * but we didn't specify an environment.  This should not be an error, but
 	 * the values that would have come from environment files will come instead
 	 * from the project files..
 	 */
-	public void testApplyMissingUnspecifiedEnvFile() {
+	@Test
+	void applyMissingUnspecifiedEnvFile() {
 		def propFile = new File("${parentProject.projectDir}/gradle-local.properties")
 		propFile.delete()
 		assertFalse('Failed to delete parent local file', propFile.exists())
@@ -1027,7 +1124,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	 * the property that should be set in the parent project file, but we'll get
 	 * the rest of them.
 	 */
-	public void testApplyMissingParentProjectFile() {
+	@Test
+	void applyMissingParentProjectFile() {
 		def propFile = new File("${parentProject.projectDir}/gradle.properties")
 		propFile.delete()
 		assertFalse('Failed to delete parent project file', propFile.exists())
@@ -1102,7 +1200,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	 * the property that usually gets set in the child project file will come
 	 * from the parent project's environment file.
 	 */
-	public void testApplyMissingChildProjectFile() {
+	@Test
+	void applyMissingChildProjectFile() {
 		def propFile = new File("${childProject.projectDir}/gradle.properties")
 		propFile.delete()
 		assertFalse('Failed to delete child project file', propFile.exists())
@@ -1180,7 +1279,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 	 * parent project file, but we'll still get the child project property from
 	 * the parent environment file.
 	 */
-	public void testApplyMissingBothProjectFiles() {
+	@Test
+	void applyMissingBothProjectFiles() {
 		def propFile = new File("${parentProject.projectDir}/gradle.properties")
 		propFile.delete()
 		assertFalse('Failed to delete parent project file', propFile.exists())

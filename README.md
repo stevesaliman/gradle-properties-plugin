@@ -1,7 +1,12 @@
 # Gradle Properties Plugin #
+
 The Properties plugin is a useful plugin that changes the way Gradle loads
 properties from the various properties files.  See the [CHANGELOG](http://github.com/stevesaliman/gradle-properties-plugin/blob/master/CHANGELOG.md)
 for recent changes.
+  
+**NEW:** Release 1.5.0 lets you to make environment files optional, so you don't
+need to make a bunch of empty files when you only need to override properties
+for certain environments.
 
 The Properties plugin is designed to make it easier to work with properties that
 change from environment to environment, or client to client. It makes life
@@ -11,19 +16,25 @@ itself, reducing the number of external magic that needs to happen for a
 project to run. It makes life easier for experienced developers to create
 different configurations for different scenarios on their boxes.
 
-Gradle can add properties to your project in several ways, as documented in the
+The Properties plugin also adds support for validation methods inside a task
+that can prevent the task from running if it doesn't have all the properties
+it needs.
+
+Gradle adds properties to your project in several ways, as documented in the
 Gradle [User Guide](https://docs.gradle.org/current/userguide/build_environment.html).
-Gradle uses these ways in a particular order, and the value of a property in 
-your project will be the value from the last thing that set the property.
-Gradle's order of processing is:
+Gradle processes property sources in a particular order, and the value of a
+property in your project will be the value from the last thing that set the 
+property.
+
+Gradle's default order of processing is:
 
 1. The `gradle.properties` file in the parent project's directory, if the project
-is a module of a multi-project build.
+   is a module of a multi-project build.
 
 2. The `gradle.properties` file in the project directory
 
 3. The `gradle.properties` file in the user's ${gradleUserHomeDir}/.gradle
-directory.
+   directory.
 
 4. Environment variables starting with ```ORG_GRADLE_PROJECT_```. For example,
    ```myProperty``` would be set if there is an environment variable named
@@ -42,35 +53,36 @@ client), but change from user to user (or client to client).  The order of
 execution for the properties plugin is:
 
 1. The `gradle.properties` file in the parent project's directory, if the project
-is a module of a multi-project build.
+   is a module of a multi-project build.
 
 2. The `gradle-${environmentName}.properties` file in the parent project's
-directory, if the project is a module of a multi-project build. If no
-environment is specified, the plugin will assume an environment name of "local".
-We *strongly* recommend adding `gradle-local.properties` to the `.gitignore` file of
-the project so that developers' local configurations don't interfere with each
-other.
+   directory, if the project is a module of a multi-project build. If no
+   environment is specified, the plugin will assume an environment name of "local".
+   We *strongly* recommend adding `gradle-local.properties` to the `.gitignore` 
+   file of the project so that developers' local configurations don't interfere
+   with each other.
 
 3. The `gradle.properties` file in the project directory
 
 4. The `gradle-${environmentName}.properties` file in the project directory.
-if no environment is specified, the plugin will assume an environment name of
-"local".  We *strongly* recommend adding `gradle-local.properties` to the `.gitignore`
-file of the project so that developers' local configurations don't interfere
-with each other.
+   if no environment is specified, the plugin will assume an environment name of
+   "local".  We *strongly* recommend adding `gradle-local.properties` to the
+   `.gitignore` file of the project so that developers' local configurations
+   don't interfere with each other.
 
 5. The `gradle.properties` file in the user's ${gradleUserHomeDir}
-directory. Properties in this file are generally things that span projects, or
-shouldn't be checked into a repository, such as user credentials, etc.
+   directory. Properties in this file are generally things that span projects,
+   or shouldn't be checked into a repository, such as user credentials, etc.
 
 6. If the ${gradleUserName} property is set, the properties plugin will load
-properties from ${gradleUserHomeDir}/`gradle-${gradleUserName}.properties`.  This
-file is useful for cases when you need to build for a different user or client
-and you have properties that span projects.  For example you might have several
-projects that have pages with a customized banner.  The contents of the banner
-change from client to client.  The `gradle-${gradleUserName}.properties` file
-is a great way to put the client's custom text into a single file per client,
-and specify at build time which client's banners should be used.
+   properties from `${gradleUserHomeDir}/gradle-${gradleUserName}.properties`.
+   This file is useful for cases when you need to build for a different user or
+   client and you have properties that span projects.  For example you might
+   have several projects that have pages with a customized banner.  The contents
+   of the banner change from client to client.  The 
+   `gradle-${gradleUserName}.properties` file is a great way to put the client's
+   custom text into a single file per client, and specify at build time which
+   client's banners should be used.
 
 7. Environment variables starting with ```ORG_GRADLE_PROJECT_```. For example,
    ```myProperty``` would be set if there is an environment variable named
@@ -115,14 +127,14 @@ for you.  See Gradle's documentation for the ```copy``` task for more
 information on filtering.
 
 Gradle can also set a Java system property from the properties it sees in the 
-various property files.  The Gradle [User Guide](https://docs.gradle.org/current/userguide/build_environment.html)
-describes the
-process in more detail, but basically, properties that start with "systemProp."
-will be converted into Java system properties, but only if they are in the 
-```gradle.properties``` file in either the root project's directory or the 
-user's home directory.  The Gradle Properties plugin adds the 
-gradle-${environmentName}.properties in the project's root directory, and the
-${gradleUserHomeDir}/gradle-${gradleUserName}.properties file to the list of
+various property files.  The Gradle 
+[User Guide](https://docs.gradle.org/current/userguide/build_environment.html)
+describes the process in more detail, but basically, properties that start with
+"systemProp." will be converted into Java system properties, but only if they
+are in the ```gradle.properties``` file in either the root project's directory
+or the user's home directory.  The Gradle Properties plugin adds the 
+`gradle-${environmentName}.properties` in the project's root directory, and the
+`${gradleUserHomeDir}/gradle-${gradleUserName}.properties` file to the list of
 files that can contain properties from which Java system properties can be set.
 
 Gradle plugins can also be applied to a Settings object by applying the plugin 
@@ -186,6 +198,10 @@ need to be setup external to the project.  For example, if the project mentions
 a tomcat home, the developer knows they need to install tomcat.  If they see a
 JNDI data source, they know they need to set one up inside their container.
 
+You should also use it if you have any Gradle tasks that depend on a property
+definition to work.  This plugin adds a `requiredProperties` method to every
+task that you can use to make sure a property is defined before the task runs.
+ 
 # How do I use it? #
 The initial setup of a project is a little involved, but once done, this process
 greatly simplifies things for the developers who follow.
@@ -202,8 +218,8 @@ with "log.dir=@application.log.dir@".
 **Step 2: Create property files**
 
 Create a file for each named environment you use for deployment.  For example,
-if you have "dev", "qa", and "prod" environments.  You would create
-gradle-dev.properties, gradle-qa.properties and gradle-prod.properties files.
+if you have "qa", "uat", and "prod" environments.  You would create
+gradle-qa.properties, gradle-uat.properties and gradle-prod.properties files.
 There is no limitation on environment names, they are just labels to tell the
 plugin which file to read at build time.  If no environment is specified, the
 properties plugin uses the gradle-local.properties file, which should not be
@@ -222,7 +238,7 @@ build.gradle file:
 
 ```groovy
 plugins {
-  id 'net.saliman.properties' version '1.4.6'
+  id 'net.saliman.properties' version '1.5.0'
 }
 ```
 
@@ -235,7 +251,7 @@ buildscript {
 		mavenCentral()
 	}
 	dependencies {
-		classpath 'net.saliman:gradle-properties-plugin:1.4.6'
+		classpath 'net.saliman:gradle-properties-plugin:1.5.0'
 	}
 }
 
@@ -252,15 +268,17 @@ allprojects {
 }
 ```
 
-If you also use your properties during the initialization phase in settings.gradle,
-you can also apply the plugin there. In this case the properties files of the root
-project and the properties files beneath the settings.gradle file are read, in that order.
-After those, as usual the property files in ${gradleUserHomeDir}, the environment variables,
-the system properties and the command line properties are handled.
-Due to a bug in Gradle, you currently (Gradle 1.11) cannot use 
+If you also use your properties during the initialization phase in 
+`settings.gradle`, you can also apply the plugin there. In this case the
+properties files of the root project and the properties files beneath the 
+`settings.gradle` file are read, in that order.  After those, as usual the
+property files in ${gradleUserHomeDir}, the environment variables, the system
+properties and the command line properties are handled. Due to a bug in Gradle,
+(Gradle 1.11) you cannot use 
 ```apply plugin: 'net.saliman.properties'``` in the settings.gradle file, but 
 you have to use the full class name
-```apply plugin: net.saliman.gradle.plugin.properties.PropertiesPlugin```.
+```apply plugin: net.saliman.gradle.plugin.properties.PropertiesPlugin```.  It
+is unknown if this is still an issue with newer versions of Gradle.
 
 When the properties plugin is applied, three things happen. First, the plugin
 processes the various property files and property location as described above.
@@ -389,7 +407,13 @@ I haven't done much testing of that yet.
 
 It is not required to have a gradle-local.properties file, but if you specify
 an environment with the ```-PenvironmentName=x``` flag, the environment file
-for that environment must exist at least once in the project hierarchy.
+for that environment must exist at least once in the project hierarchy.  If a
+environment specific file is not found, the plugin will cause the build to fail
+because the user declared intent to use an environment, but no file exists for
+it.  This behavior can be overridden by setting the 
+`propertiesPluginIgnoreMissingEnvironment` property to false.  Since this is 
+likely to be a per-project setting, the project's `build.gradle` is a great
+place to set it. 
 
 # Acknowledgements #
 A special thank you to to Hans Dockter at Gradleware for showing me how to

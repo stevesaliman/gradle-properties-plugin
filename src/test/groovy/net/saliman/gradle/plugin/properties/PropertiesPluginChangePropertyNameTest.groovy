@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2016 Steven C. Saliman
+ * Copyright 2012-2019 Steven C. Saliman
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,15 @@
  *
  */
 package net.saliman.gradle.plugin.properties
+
+
+import org.junit.Before
+import org.junit.Test
+
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertFalse
+import static org.junit.Assert.fail
+
 /**
  * The {@link PropertiesPluginParentProjectTest} class tests applying the
  * plugin with the standard {@code environmentName} and {@code gradleUserName}
@@ -33,7 +42,8 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
 	 * Set up the test data.  This calls a helper method to create the projects
 	 * because we need to repeat the setup in one of the tests.
 	 */
-	public void setUp() {
+	@Before
+	void setUp() {
 		createProjects()
 		setFileProperties(true, true)
 		copyFiles()
@@ -45,7 +55,8 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
 	 * environment works fine.  We only need to check that one property was read
 	 * from the local file.
 	 */
-	public void testApplyPluginByType() {
+	@Test
+	void applyPluginByType() {
 		parentProject.apply plugin: net.saliman.gradle.plugin.properties.PropertiesPlugin
 		assertEquals('local', parentProject.environmentName)
 		assertEquals('local', parentProject.ext.environmentName)
@@ -60,7 +71,8 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
 	 * value to make sure the plugin is using the right property.  We don't need
 	 * to check every property from the file - we already know that works.
 	 */
-	public void testApplyChangedPropFileDirPropertyNoValue() {
+	@Test
+	void applyChangedPropFileDirPropertyNoValue() {
 		// simulate a "-PpropertiesPluginEnvironmentFileDirProperty=myDir
 		// -PenvironmentFileDir=gradle-properties" command line
 		def commandArgs = [
@@ -92,7 +104,8 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
 	 * doesn't exist.  The plugin should fail, even if the "environmentFileDir"
 	 * is still set to a valid directory.
 	 */
-	public void testApplyChangedPropFileDirPropertyBadValue() {
+	@Test
+	void applyChangedPropFileDirPropertyBadValue() {
 		// simulate a "-PpropertiesPluginEnvironmentFileDirProperty=myEnvironment
 		// -PenvironmentFileDir=dummy -PenvironmentName=test" command line
 		def commandArgs = [
@@ -116,7 +129,8 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
 	 * points to a file.  The plugin should fail, even if the
 	 * "environmentFileDir" is still set to a valid directory.
 	 */
-	public void testApplyChangedPropFileDirPropertyFileValue() {
+	@Test
+	void applyChangedPropFileDirPropertyFileValue() {
 		// simulate a "-PpropertiesPluginEnvironmentFileDirProperty=myEnvironment
 		// -PenvironmentFileDir=dummy -PenvironmentName=test" command line
 		def commandArgs = [
@@ -140,7 +154,8 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
 	 * points to a valid directory.  The plugin should succeed, even if
 	 * "environmentFileDir" is invalid.
 	 */
-	public void testApplyChangedEnvironmentFileDirPropertyGoodValue() {
+	@Test
+	void applyChangedEnvironmentFileDirPropertyGoodValue() {
 		// simulate a "-PpropertiesPluginEnvironmentFileDirProperty=myDir
 		// -PmyDir=test -PenvironmentFileDir=dummy" command line
 		def commandArgs = [
@@ -177,7 +192,8 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
 	 * plugin is using the right property.  We don't need to check every property
 	 * from the file - we already know that works.
 	 */
-	public void testApplyChangedEnvNamePropertyNoValue() {
+	@Test
+	void applyChangedEnvNamePropertyNoValue() {
 		// simulate a "-PpropertiesPluginEnvironmentNameProperty=myEnvironment
 		// -PenvironmentName=test" command line
 		def commandArgs = [
@@ -211,7 +227,8 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
 	 * have a file.  The plugin should fail, even if the "environmentName" is
 	 * still set to a valid file.
 	 */
-	public void testApplyChangedEnvNamePropertyBadValue() {
+	@Test
+	void applyChangedEnvNamePropertyBadValue() {
 		// simulate a "-PpropertiesPluginEnvironmentNameProperty=myEnvironment
 		// -PmyEnvironment=dummy -PenvironmentName=test" command line
 		def commandArgs = [
@@ -231,11 +248,52 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
 
 	/**
 	 * Try applying the plugin when we specify a different property for the
+	 * environment name, and we specify a value for that variable that doesn't
+	 * have a file.  The plugin should fail, even if the "environmentName" is
+	 * still set to a valid file, and even though there is a file for the
+	 * "environmentName", we should get our values from the project file
+	 * because we're using a different property to specify the environment.
+	 */
+	@Test
+	void applyChangedEnvNamePropertyIgnoreBadValue() {
+		// simulate a "-PpropertiesPluginIgnoreMissingEnvFile=true
+		// -PpropertiesPluginEnvironmentNameProperty=myEnvironment
+		// -PmyEnvironment=dummy -PenvironmentName=test" command line
+		def commandArgs = [
+				propertiesPluginIgnoreMissingEnvFile: 'true',
+				propertiesPluginEnvironmentNameProperty: 'myEnvironment',
+				myEnvironment: 'dummy',
+				environmentName: 'test'
+		]
+		setNonFileProperties(true, true, commandArgs)
+
+		parentProject.apply plugin: 'properties'
+		def tokens = parentProject.filterTokens
+		// the plugin should be using the local environment,...
+		assertEquals('dummy', parentProject.myEnvironment)
+		// ... the environmentName should still be set ...
+		assertEquals('test', parentProject.environmentName)
+		assertEquals('test', parentProject.ext.environmentName)
+		// ... but the property values should come from the local file.
+		assertEquals('ParentProject.parentEnvironmentValue', parentProject.parentEnvironmentProperty)
+
+		// camel case notation
+		assertEquals('ParentProject.parentEnvironmentValue', tokens['parentEnvironmentProperty'])
+		// dot notation
+		assertEquals('ParentProject.parentEnvironmentValue', tokens['parent.environment.property'])
+
+		// Check System properties.
+		assertEquals('ParentProject.parentEnvironmentValue', System.properties['parentEnvironmentProp'])
+	}
+
+	/**
+	 * Try applying the plugin when we specify a different property for the
 	 * environment name, and we specify a value for that variable that does have
 	 * have a file.  The plugin should succeed, even if "envornmentName" is
 	 * invalid.
 	 */
-	public void testApplyChangedEnvNamePropertyGoodValue() {
+	@Test
+	void applyChangedEnvNamePropertyGoodValue() {
 		// simulate a "-PpropertiesPluginEnvironmentNameProperty=myEnvironment
 		// -PmyEnvironment=test -PenvironmentName=dummy" command line
 		def commandArgs = [
@@ -274,7 +332,8 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
 	 * right property.  We don't need to check every property from the file - we
 	 * already know that works.
 	 */
-	public void testApplyChangedUserNamePropertyNoValue() {
+	@Test
+	void applyChangedUserNamePropertyNoValue() {
 		// simulate a "-PpropertiesPluginGradleUserNameProperty=myUSer
 		// -PgradleUserName=dummy" command line
 		def commandArgs = [
@@ -307,7 +366,8 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
 	 * file.  The plugin should fail, even if the "gradleUserName" is still set
 	 * to a valid file.
 	 */
-	public void testApplyChangedUserNamePropertyBadValue() {
+	@Test
+	void applyChangedUserNamePropertyBadValue() {
 		// simulate a "-PpropertiesPluginGradleUserNameProperty=myUser
 		// -PmyUser=dummy -PgradleUserName=user" command line
 		def commandArgs = [
@@ -331,7 +391,8 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
 	 * have a file.  The plugin should succeed, even if "gradleUserNAme" is
 	 * invalid.
 	 */
-	public void testApplyChangedUserNamePropertyGoodValue() {
+	@Test
+	void applyChangedUserNamePropertyGoodValue() {
 		// simulate a "-PpropertiesPluginGradleUserNameProperty=myUser
 		// -PmyUser=user -PgradleUserName=dummy" command line
 		def commandArgs = [
