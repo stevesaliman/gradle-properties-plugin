@@ -411,7 +411,7 @@ for that environment must exist at least once in the project hierarchy.  If a
 environment specific file is not found, the plugin will cause the build to fail
 because the user declared intent to use an environment, but no file exists for
 it.  This behavior can be overridden by setting the 
-`propertiesPluginIgnoreMissingEnvironment` property to false.  Since this is 
+`propertiesPluginIgnoreMissingEnvFile` property to `true`.  Since this is 
 likely to be a per-project setting, the project's `build.gradle` is a great
 place to set it. 
 
