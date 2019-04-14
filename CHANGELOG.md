@@ -1,6 +1,6 @@
 Changes for 1.5.0
 =================
-- Added a `propertiesPluginIgnoreMissingEnvironment` to override the plugin's
+- Added a `propertiesPluginIgnoreMissingEnvFile` to override the plugin's
   default behavior of failing the build when an environment specific file can't
   be found.  This is most when you only need to override properties in some, 
   but not all, environments and you don't want to define a bunch of empty files. 
