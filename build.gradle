@@ -11,7 +11,7 @@ buildscript {
 	}
 	dependencies {
 		classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
-		classpath 'com.gradle.publish:plugin-publish-plugin:0.9.10'
+		classpath 'com.gradle.publish:plugin-publish-plugin:0.10.1'
 	}
 }
 
@@ -31,7 +31,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 // Release version that won't conflict with the bintray plugin
-def releaseVersion = "1.5.0"
+def releaseVersion = "1.5.1"
 group = "net.saliman"
 archivesBaseName = 'gradle-properties-plugin'
 version = releaseVersion
@@ -59,8 +59,8 @@ dependencies {
 	compile gradleApi()
 	compile localGroovy()
 	testCompile "junit:junit:4.12"
-	archives "org.apache.maven.wagon:wagon-ssh:2.2"
-	archives "org.apache.maven.wagon:wagon-ssh-external:2.2"
+	archives "org.apache.maven.wagon:wagon-ssh:2.8"
+	archives "org.apache.maven.wagon:wagon-ssh-external:2.8"
 }
 
 task sourceJar(type: Jar) {

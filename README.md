@@ -4,9 +4,10 @@ The Properties plugin is a useful plugin that changes the way Gradle loads
 properties from the various properties files.  See the [CHANGELOG](http://github.com/stevesaliman/gradle-properties-plugin/blob/master/CHANGELOG.md)
 for recent changes.
   
-**NEW:** Release 1.5.0 lets you to make environment files optional, so you don't
-need to make a bunch of empty files when you only need to override properties
-for certain environments.
+**NEW:** Starting with release 1.5.0, environment files can be optional, so you
+won't need to make a bunch of empty files when you only need to override
+properties for certain environments. See the description of the
+`propertiesPluginIgnoreMissingEnvironment` for more details.
 
 The Properties plugin is designed to make it easier to work with properties that
 change from environment to environment, or client to client. It makes life
@@ -238,7 +239,7 @@ build.gradle file:
 
 ```groovy
 plugins {
-  id 'net.saliman.properties' version '1.5.0'
+  id 'net.saliman.properties' version '1.5.1'
 }
 ```
 
@@ -251,7 +252,7 @@ buildscript {
 		mavenCentral()
 	}
 	dependencies {
-		classpath 'net.saliman:gradle-properties-plugin:1.5.0'
+		classpath 'net.saliman:gradle-properties-plugin:1.5.1'
 	}
 }
 

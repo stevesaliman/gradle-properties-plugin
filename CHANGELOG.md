@@ -1,3 +1,11 @@
+Changes for 1.5.1
+=================
+
+- Re-published the plugin using a newer version of the plugin-publish-plugin,
+  The old version had some known bugs, which were discused in
+  https://discuss.gradle.org/t/weird-fail-on-plugins-gradle-org-enunciate-2-10-0/24573.
+  This should resolve Issue #31
+  
 Changes for 1.5.0
 =================
 - Added a `propertiesPluginIgnoreMissingEnvFile` to override the plugin's
