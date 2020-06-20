@@ -16,7 +16,7 @@ buildscript {
 }
 
 plugins {
-	id 'net.saliman.cobertura' version '2.5.0'
+	id 'net.saliman.cobertura' version '3.0.0'
 }
 
 apply plugin: "groovy"
