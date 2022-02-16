@@ -338,22 +338,24 @@ This method throws a MissingPropertyException if any of the named properties are
 **recommendedProperty**
 
 ```groovy
-recommendedProperty "somePropertyName", "default File Text"
+recommendedProperty "somePropertyName", "default File Text", "Additional informational text"
 ```
-This method is handy when there are properties that have defaults somewhere else.
-For example, the build file might define it, or the application might be able to
-get it from a system file. It is most useful in alerting newer developers that
-something must be configured somewhere on their systems.
+This method is handy when there are properties that have defaults somewhere else, or is not needed
+in all environments.  For example, the build file might define it, or the application might be able
+to get it from a system file. It is most useful in alerting newer developers that something must be
+configured somewhere on their systems.
 
-The method checks to see if the given property is defined. If it is not, a warning
-message is displayed alerting the user that a default will be used, and if the
-defaultFile has been given, the message will include it so that the developer
-knows which file will be providing the default value.
+The method checks to see if the given property is defined. If it is not, a warning message is 
+displayed alerting the user that a default will be used, and if the defaultFile has been given, the
+message will include it so that the developer knows which file will be providing the default value.
+If additional text is provided, it will be appended to the warning message.
 
 **recommendedProperties**
 
 ```groovy
-recommendedProperties names: ["property1", "property2", ...], defaultFile: "default File Text"
+recommendedProperties names: ["property1", "property2", ...], 
+                      defaultFile: "default File Text",
+                      additionalInfo: "Additional information"
 ```
 
 This method checks all the given property names, and prints a message if we're missing any.

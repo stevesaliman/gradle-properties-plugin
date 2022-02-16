@@ -458,10 +458,10 @@ class PropertiesPlugin implements Plugin<PluginAware> {
             }
 
             // add the recommendedProperty property
-            task.ext.recommendedProperty = { String propertyName, String defaultFile = null ->
+            task.ext.recommendedProperty = { String propertyName, String defaultFile = null, String additionalInfo = null ->
                 project.gradle.taskGraph.whenReady { graph ->
                     if ( graph.hasTask(task.path) ) {
-                        checkRecommendedProperty(project, propertyName, task, "recommendedProperty", defaultFile)
+                        checkRecommendedProperty(project, propertyName, task, "recommendedProperty", defaultFile, additionalInfo)
                     }
                 }
             }
@@ -472,8 +472,9 @@ class PropertiesPlugin implements Plugin<PluginAware> {
                     if ( graph.hasTask(task.path) ) {
                         def propertyNames = hash['names']
                         def defaultFile = hash['defaultFile']
+                        def additionalInfo = hash['additionalInfo']
                         for ( propertyName in propertyNames ) {
-                            checkRecommendedProperty(project, propertyName, task, "recommendedProperties", defaultFile)
+                            checkRecommendedProperty(project, propertyName, task, "recommendedProperties", defaultFile, additionalInfo)
                         }
                     }
                 }
@@ -510,21 +511,24 @@ class PropertiesPlugin implements Plugin<PluginAware> {
      * @param caller the name of the method calling this one.  Used to log who is doing the work.
      * @param defaultFile an optional description of where the project will get the value if it
      *         isn't specified during the build.
+     * @param additionalInfo additional information to append to the warning message.
      */
-    private checkRecommendedProperty(project, propertyName, task, caller, defaultFile) {
+    private checkRecommendedProperty(project, propertyName, task, caller, defaultFile, additionalInfo) {
         def taskName = task.path
-        def propertyValue = null
         if ( !project.hasProperty(propertyName) ) {
             def message = "WARNING: '${propertyName}', required by '$taskName' task, has no value, using default"
             if ( defaultFile != null ) {
                 message = message + " from '${defaultFile}'"
             }
+            message = message + '.'
+            if ( additionalInfo != null ) {
+                message = message + "  " + additionalInfo
+            }
             println message
             return
-        } else {
-            propertyValue = project.property(propertyName)
         }
         // Set the property and its value as a task input so the task becomes dirty when it changes.
+        def propertyValue = project.property(propertyName)
         logger.debug("PropertiesPlugin:${caller} Setting $propertyName as an input to ${taskName} with a value of '$propertyValue'")
         task.inputs.property(propertyName, propertyValue)
     }

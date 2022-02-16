@@ -4,6 +4,9 @@ Changes for 1.5.2
 - Fixed a bug with the `recommendedProperty` method, which was throwing exceptions when the property
   was missing, which defeated the purpose of the method.
 
+- Added an `additionalInfo` parameter to the `recommendedProperty` and `recommendedProperties`
+  methods that get added to each task in the build.
+
 Changes for 1.5.1
 =================
 
