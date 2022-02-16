@@ -239,7 +239,7 @@ build.gradle file:
 
 ```groovy
 plugins {
-  id 'net.saliman.properties' version '1.5.1'
+  id 'net.saliman.properties' version '1.5.2'
 }
 ```
 
@@ -252,7 +252,7 @@ buildscript {
 		mavenCentral()
 	}
 	dependencies {
-		classpath 'net.saliman:gradle-properties-plugin:1.5.1'
+		classpath 'net.saliman:gradle-properties-plugin:1.5.2'
 	}
 }
 

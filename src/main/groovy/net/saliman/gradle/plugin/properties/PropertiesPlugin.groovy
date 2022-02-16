@@ -535,14 +535,18 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 	 */
 	private checkRecommendedProperty(project, propertyName, task, caller, defaultFile) {
 		def taskName = task.path
+		def propertyValue = null
 		if ( !project.hasProperty(propertyName) ) {
 			def message = "WARNING: '${propertyName}', required by '$taskName' task, has no value, using default"
 			if ( defaultFile != null ) {
 				message = message + " from '${defaultFile}'"
 			}
 			println message
+			return
+		} else {
+			propertyValue = project.property(propertyName)
 		}
-		def propertyValue = project.property(propertyName)
+		// Set the property and its value as a task input so the task becomes dirty when it changes.
 		logger.debug("PropertiesPlugin:${caller} Setting $propertyName as an input to ${taskName} with a value of '$propertyValue'")
 		task.inputs.property(propertyName, propertyValue)
 	}

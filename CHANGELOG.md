@@ -1,8 +1,14 @@
+Changes for 1.5.2
+=================
+
+- Fixed a bug with the `recommendedProperty` method, which was throwing exceptions when the property
+  was missing, which defeated the purpose of the method.
+
 Changes for 1.5.1
 =================
 
 - Re-published the plugin using a newer version of the plugin-publish-plugin,
-  The old version had some known bugs, which were discused in
+  The old version had some known bugs, which were discussed in
   https://discuss.gradle.org/t/weird-fail-on-plugins-gradle-org-enunciate-2-10-0/24573.
   This should resolve Issue #31
   
@@ -11,11 +17,10 @@ Changes for 1.5.0
 - Added a `propertiesPluginIgnoreMissingEnvFile` to override the plugin's
   default behavior of failing the build when an environment specific file can't
   be found.  This is most when you only need to override properties in some, 
-  but not all, environments and you don't want to define a bunch of empty files. 
+  but not all, environments, and you don't want to define a bunch of empty files. 
   It is also handy when you are using Spring Boot for project properties, but
   still use Gradle for support tasks, and you want to use the
-  `requiredProperties` method, or in cases where you only need to override
-  properties in some, but not all
+  `requiredProperties` method.
  
 - Dropped support for Java 6 and Java 7.
 
