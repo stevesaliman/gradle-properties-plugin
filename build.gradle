@@ -29,7 +29,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 // Release version that won't conflict with the bintray plugin
-def releaseVersion = "1.5.2-SNAPSHOT"
+def releaseVersion = "1.5.2"
 group = "net.saliman"
 archivesBaseName = 'gradle-properties-plugin'
 version = releaseVersion
