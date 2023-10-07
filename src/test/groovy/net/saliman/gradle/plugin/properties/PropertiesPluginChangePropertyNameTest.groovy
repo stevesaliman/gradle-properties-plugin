@@ -76,7 +76,7 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
         ]
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
         def tokens = parentProject.filterTokens
         //the old environmentFileDir property should still be set ...
         assertEquals('gradle-properties', parentProject.environmentFileDir)
@@ -156,7 +156,7 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
         ]
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
         def tokens = parentProject.filterTokens
 
         // the plugin should be using the subdirectory to load properties,...
@@ -192,7 +192,7 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
         ]
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
         def tokens = parentProject.filterTokens
         // the plugin should be using the local environment,...
         assertEquals('local', parentProject.myEnvironment)
@@ -255,7 +255,7 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
         ]
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
         def tokens = parentProject.filterTokens
         // the plugin should be using the local environment,...
         assertEquals('dummy', parentProject.myEnvironment)
@@ -290,7 +290,7 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
         ]
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
         def tokens = parentProject.filterTokens
 
         // the plugin should be using the test environment,...
@@ -327,7 +327,7 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
         ]
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
         def tokens = parentProject.filterTokens
         // the plugin should be ignoring users,...
         assertFalse(parentProject.hasProperty('myUser'))
@@ -384,7 +384,7 @@ class PropertiesPluginChangePropertyNameTest extends BasePluginTest {
         ]
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
         def tokens = parentProject.filterTokens
 
         // the plugin should be using the 'user' user,...

@@ -98,8 +98,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
         ]
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
-        childProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
+        childProject.apply plugin: 'net.saliman.properties'
         def tokens = childProject.filterTokens;
         assertEquals('test', childProject.environmentName)
         assertEquals('test', childProject.ext.environmentName)
@@ -166,8 +166,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
         ]
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
-        childProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
+        childProject.apply plugin: 'net.saliman.properties'
         def tokens = childProject.filterTokens;
         assertEquals('test', childProject.environmentName)
         assertEquals('test', childProject.ext.environmentName)
@@ -237,8 +237,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
         ]
         setNonFileProperties(true, false, commandArgs)
 
-        parentProject.apply plugin: 'properties'
-        childProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
+        childProject.apply plugin: 'net.saliman.properties'
         def tokens = childProject.filterTokens;
         assertEquals('test', childProject.environmentName)
         assertEquals('test', childProject.ext.environmentName)
@@ -309,8 +309,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
         ]
         setNonFileProperties(false, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
-        childProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
+        childProject.apply plugin: 'net.saliman.properties'
         def tokens = childProject.filterTokens;
         assertEquals('test', childProject.environmentName)
         assertEquals('test', childProject.ext.environmentName)
@@ -379,8 +379,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
         ]
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
-        childProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
+        childProject.apply plugin: 'net.saliman.properties'
         def tokens = childProject.filterTokens;
         assertEquals('test', childProject.environmentName)
         assertEquals('test', childProject.ext.environmentName)
@@ -448,8 +448,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
         ]
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
-        childProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
+        childProject.apply plugin: 'net.saliman.properties'
         def tokens = childProject.filterTokens;
         assertEquals('local', childProject.environmentName)
         assertEquals('local', childProject.ext.environmentName)
@@ -519,8 +519,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
         ]
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
-        childProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
+        childProject.apply plugin: 'net.saliman.properties'
         def tokens = childProject.filterTokens;
         assertEquals('local', childProject.environmentName)
         assertEquals('local', childProject.ext.environmentName)
@@ -593,8 +593,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
                            'systemProp.commandProp': 'Command.commandValue']
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
-        childProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
+        childProject.apply plugin: 'net.saliman.properties'
         def tokens = childProject.filterTokens;
         assertEquals('local', childProject.environmentName)
         assertEquals('local', childProject.ext.environmentName)
@@ -661,7 +661,7 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
         try {
             // Only apply the child because we want to make sure the error happens on the child
             // project.
-            childProject.apply plugin: 'properties'
+            childProject.apply plugin: 'net.saliman.properties'
             fail("We should have gotten an error when we're missing a user file.")
         } catch (Exception e) {
             // this was expected.
@@ -687,8 +687,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
         ]
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
-        childProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
+        childProject.apply plugin: 'net.saliman.properties'
         def tokens = childProject.filterTokens;
         assertEquals('local', childProject.environmentName)
         assertEquals('local', childProject.ext.environmentName)
@@ -762,8 +762,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
         ]
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
-        childProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
+        childProject.apply plugin: 'net.saliman.properties'
         def tokens = childProject.filterTokens;
         assertEquals('test', childProject.environmentName)
         assertEquals('test', childProject.ext.environmentName)
@@ -840,12 +840,12 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
 
         // We shouldn't be able to apply to the parent, but the child should run just fine.
         try {
-            parentProject.apply plugin: 'properties'
+            parentProject.apply plugin: 'net.saliman.properties'
             fail("We should have gotten an error when we're missing a parent environment file.")
         } catch (Exception e) {
             // this was expected.
         }
-        childProject.apply plugin: 'properties'
+        childProject.apply plugin: 'net.saliman.properties'
         def tokens = childProject.filterTokens;
         assertEquals('test', childProject.environmentName)
         assertEquals('test', childProject.ext.environmentName)
@@ -918,7 +918,7 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
         try {
             // Only apply the child because we want to make sure the error happens on the child
             // project.
-            childProject.apply plugin: 'properties'
+            childProject.apply plugin: 'net.saliman.properties'
             fail("We should have gotten an error when we're missing an environment file.")
         } catch (Exception e) {
             // this was expected.
@@ -944,7 +944,7 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
         setNonFileProperties(true, true, commandArgs)
 
         // Only apply the child because we're only concerned with the child in this test.
-        childProject.apply plugin: 'properties'
+        childProject.apply plugin: 'net.saliman.properties'
         assertEquals('dummy', childProject.environmentName)
         assertEquals('dummy', childProject.ext.environmentName)
         assertEquals('user', childProject.gradleUserName)
@@ -1020,8 +1020,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
         ]
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
-        childProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
+        childProject.apply plugin: 'net.saliman.properties'
         def tokens = childProject.filterTokens;
         assertEquals('local', childProject.environmentName)
         assertEquals('local', childProject.ext.environmentName)
@@ -1095,8 +1095,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
         ]
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
-        childProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
+        childProject.apply plugin: 'net.saliman.properties'
         def tokens = childProject.filterTokens;
         assertEquals('local', childProject.environmentName)
         assertEquals('local', childProject.ext.environmentName)
@@ -1167,8 +1167,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
         ]
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
-        childProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
+        childProject.apply plugin: 'net.saliman.properties'
         def tokens = childProject.filterTokens;
         assertEquals('test', childProject.environmentName)
         assertEquals('test', childProject.ext.environmentName)
@@ -1246,8 +1246,8 @@ class PropertiesPluginChildProjectTest extends BasePluginTest {
                 gradleUserName: 'user']
         setNonFileProperties(true, true, commandArgs)
 
-        parentProject.apply plugin: 'properties'
-        childProject.apply plugin: 'properties'
+        parentProject.apply plugin: 'net.saliman.properties'
+        childProject.apply plugin: 'net.saliman.properties'
         def tokens = childProject.filterTokens;
         assertEquals('local', childProject.environmentName)
         assertEquals('local', childProject.ext.environmentName)

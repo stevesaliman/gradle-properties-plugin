@@ -1,12 +1,18 @@
 Gradle Properties Plugin
 ========================
 
-The Properties plugin is a useful plugin that changes the way Gradle loads
-properties from the various properties files.  See the
+The Properties plugin is a useful plugin that changes the way Gradle loads properties from the
+various properties files.  See the
 [CHANGELOG](http://github.com/stevesaliman/gradle-properties-plugin/blob/master/CHANGELOG.md)
 for recent changes.
-  
-**NEW:** Starting with release 1.5.0, environment files can be optional, so you won't need to make a
+
+NEWS
+====
+
+Starting with release 1.6.0, the plugin needs applied with it's qualified name, 
+`net.saliman.properites`
+
+Starting with release 1.5.0, environment files can be optional, so you won't need to make a
 bunch of empty files when you only need to override properties for certain environments. See the
 description of the `propertiesPluginIgnoreMissingEnvironment` for more details.
 
@@ -69,11 +75,11 @@ execution for the properties plugin is:
 
 6. If the ${gradleUserName} property is set, the properties plugin will load properties from 
    `${gradleUserHomeDir}/gradle-${gradleUserName}.properties`.  This file is useful for cases when
-   you need to build for a different user or client and you have properties that span projects.  For
-   example you might have several projects that have pages with a customized banner.  The contents
-   of the banner change from client to client.  The `gradle-${gradleUserName}.properties` file is a
-   great way to put the client's custom text into a single file per client, and specify at build
-   time which client's banners should be used.
+   you need to build for a different user or client, and you have properties that span projects.  
+   For example, you might have several projects that have pages with a customized banner.  The
+   contents of the banner change from client to client.  The `gradle-${gradleUserName}.properties` 
+   file is a great way to put the client's custom text into a single file per client, and specify at
+   build time which client's banners should be used.
 
 7. Environment variables starting with `ORG_GRADLE_PROJECT_`. For example, `myProperty` would be set
    if there is an environment variable named `ORG_GRADLE_PROJECT_myProperty`. Case counts.
@@ -150,7 +156,7 @@ allprojects {
 }
 ```
 
-Note that this example uses a class name instead of a plugin id.  This is to workaround a bug in
+Note that this example uses a class name instead of a plugin id.  This is to work around a bug in
 Gradle that prevents plugins from being found by id inside an init.gradle file.
 
 Why should I use it?
@@ -214,11 +220,11 @@ To use the plugin with Gradle 2.1 or later, add the following to the build.gradl
 
 ```groovy
 plugins {
-    id 'net.saliman.properties' version '1.5.2'
+    id 'net.saliman.properties' version '1.6.0'
 }
 ```
 
-To use the plugin with Gradle 2.0 or older, add the following to build.gradle:
+To use the older Gradle 2.0 style, add the following to build.gradle:
 
 ```groovy
 // Pull the plugin from Maven Central
@@ -227,7 +233,7 @@ buildscript {
 		mavenCentral()
 	}
 	dependencies {
-		classpath 'net.saliman:gradle-properties-plugin:1.5.2'
+		classpath 'net.saliman:gradle-properties-plugin:1.6.0'
 	}
 }
 
@@ -315,8 +321,8 @@ Properties added to each task
 
 This plugin adds some methods to each task, which can be used to check for the presence of
 properties after configuration, but before any tasks are executed.  These methods will also add
-properties to the task's inputs that can be used to determine when a task is up to date.  A task is
-never up to date if there are no outputs, but if the task has defined any outputs, Gradle will
+properties to the task's inputs that can be used to determine when a task is up-to-date.  A task is
+never up-to-date if there are no outputs, but if the task has defined any outputs, Gradle will
 consider the task up to date if the other inputs and outputs haven't changed, and the properties
 haven't either.
 
@@ -382,6 +388,6 @@ place to set it.
 
 Acknowledgements
 ================
-A special thank you to to Hans Dockter at Gradleware for showing me how to dynamically define the
+A special thank you to Hans Dockter at Gradleware for showing me how to dynamically define the
 requiredProperty method and attach it to the right place in the Gradle build lifecycle.
 

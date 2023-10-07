@@ -1,3 +1,10 @@
+Changes for 1.6.0
+=================
+
+- Updated the gradle wrapper to version 7.6.1
+
+- The plugin must now be applied by its qualified name.
+
 Changes for 1.5.2
 =================
 
