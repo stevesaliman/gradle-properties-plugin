@@ -18,6 +18,7 @@ import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import sun.misc.Unsafe;
 
 /**
  * This class contains some very ugly utilities for setting and clearing environment variables for
@@ -29,6 +30,33 @@ import java.util.Map;
  * is run as a Groovy file.
  */
 public class SetEnv {
+    private static Unsafe UNSAFE;
+
+    // Get the "Unsafe" singleton from deep within the bowels of Java internal classes.
+    static {
+        try {
+            Field f = Unsafe.class.getDeclaredField("theUnsafe");
+            f.setAccessible(true);
+            UNSAFE = (Unsafe) f.get(null);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Get the writeable map that actually holds the environment variables so the other methods in
+     * this class can set or unset them.
+     *
+     * @return a map of environment variables
+     * @throws NoSuchFieldException if the internal field that has the map can't be loaded.
+     */
+    @SuppressWarnings("unchecked")
+    public static Map<String, String> getWritableEnvMap() throws NoSuchFieldException {
+        Map<String, String> unwritable = System.getenv();
+        Object o = UNSAFE.getObject(unwritable, UNSAFE.objectFieldOffset(unwritable.getClass().getDeclaredField("m")));
+        return (Map<String, String>)o;
+    }
+
     /**
      * Set environment variables to include those in the given map.
      *
@@ -36,15 +64,8 @@ public class SetEnv {
      */
     public static void setEnv(Map<String, String> newenv) {
         try {
-            Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
-            Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
-            theEnvironmentField.setAccessible(true);
-            Map<String, String> env = (Map<String, String>) theEnvironmentField.get(null);
-            env.putAll(newenv);
-            Field theCaseInsensitiveEnvironmentField = processEnvironmentClass.getDeclaredField("theCaseInsensitiveEnvironment");
-            theCaseInsensitiveEnvironmentField.setAccessible(true);
-            Map<String, String> cienv = (Map<String, String>) theCaseInsensitiveEnvironmentField.get(null);
-            cienv.putAll(newenv);
+            Map<String, String> writable = getWritableEnvMap();
+            writable.putAll(newenv);
         } catch (NoSuchFieldException e) {
             try {
                 Class[] classes = Collections.class.getDeclaredClasses();
@@ -67,6 +88,7 @@ public class SetEnv {
         }
     }
 
+
     /**
      * Remove the specified variables from the current map of environment variables.
      *
@@ -74,19 +96,11 @@ public class SetEnv {
      */
     public static void unsetEnv(List<String> vars) {
         try {
-            Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
-            Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
-            theEnvironmentField.setAccessible(true);
-            Map<String, String> env = (Map<String, String>) theEnvironmentField.get(null);
-            for ( String v : vars ) {
-                env.remove(v);
+            Map<String, String> writable = getWritableEnvMap();
+            for ( String v: vars ) {
+                writable.remove(v);
             }
-            Field theCaseInsensitiveEnvironmentField = processEnvironmentClass.getDeclaredField("theCaseInsensitiveEnvironment");
-            theCaseInsensitiveEnvironmentField.setAccessible(true);
-            Map<String, String> cienv = (Map<String, String>) theCaseInsensitiveEnvironmentField.get(null);
-            for ( String v : vars ) {
-                cienv.remove(v);
-            }
+
         } catch (NoSuchFieldException e) {
             try {
                 Class[] classes = Collections.class.getDeclaredClasses();
