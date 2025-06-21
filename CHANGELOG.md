@@ -1,7 +1,9 @@
 Changes for 1.5.3
 =================
 
-- Updated the gradle wrapper to version 7.6.1, but got it building in version 8 as well.
+- Switched to the Vanniktech plugin to publish to maven central using the new API. 
+
+- Updated the gradle wrapper to version 8.5 to support the new publishing plugin.
 
 - The plugin must now be applied by its qualified name.
 
