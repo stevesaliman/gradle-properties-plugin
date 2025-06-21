@@ -427,9 +427,9 @@ class PropertiesPlugin implements Plugin<PluginAware> {
      * @param project the project applying the plugin
      */
     private registerTaskListener(project) {
-        // "all" executes the closure against all tasks in the project, and any new tasks added in
-        // the future.  This closure defines a requireProperty method for every task.
-        project.tasks.all { task ->
+        // "configureEach" executes the closure against all tasks in the project, and any new tasks
+        // added in the future.  This closure defines a requireProperty method for every task.
+        project.tasks.configureEach { task ->
             // This is the requireProperty method, which executes as soon as it is called in the
             // build file...
             task.ext.requiredProperty = { String propertyName ->

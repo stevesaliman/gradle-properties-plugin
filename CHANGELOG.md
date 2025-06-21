@@ -1,9 +1,12 @@
-Changes for 1.6.0
+Changes for 1.5.3
 =================
 
-- Updated the gradle wrapper to version 7.6.1
+- Updated the gradle wrapper to version 7.6.1, but got it building in version 8 as well.
 
 - The plugin must now be applied by its qualified name.
+
+- Used the task configuration avoidance API to add new methods to tasks, with thanks to Björn
+  Kautler (@Vampire).  Fixes Issue #42
 
 Changes for 1.5.2
 =================
