@@ -26,8 +26,6 @@ apply plugin: "idea"
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-// Release version that won't conflict with the bintray plugin
-//def releaseVersion = propertiesPluginVersion
 group = "net.saliman"
 archivesBaseName = "gradle-properties-plugin"
 version = propertiesPluginVersion
@@ -100,5 +98,20 @@ mavenPublishing {
             connection = "scm:https://stevesaliman@github.com/stevesaliman/gradle-properties-plugin"
             developerConnection = "scm:git@github.com:stevesaliman/gradle-properties-plugin.git"
         }
+    }
+}
+
+// Disable PluginMarkerMaven uploads to any Maven repo (e.g., snapshots / Central)
+afterEvaluate {
+    tasks.withType(PublishToMavenRepository).configureEach { t ->
+        def pub = t.publication
+        if (pub instanceof MavenPublication && pub.name.endsWith('PluginMarkerMaven')) {
+            t.enabled = false
+            println("Disabled ${t.name} for ${pub.groupId}:${pub.artifactId}")
+            logger.lifecycle("Disabled ${t.name} for ${pub.groupId}:${pub.artifactId}")
+        }
+    }
+    publishing.publications.withType(MavenPublication).all {
+        println "publication '$name' -> $groupId:$artifactId:$version"
     }
 }
