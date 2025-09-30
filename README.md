@@ -10,7 +10,7 @@ NEWS
 ====
 
 Starting with release 1.6.0, the plugin needs applied with it's qualified name, 
-`net.saliman.properites`
+`net.saliman.properties`
 
 Starting with release 1.5.0, environment files can be optional, so you won't need to make a
 bunch of empty files when you only need to override properties for certain environments. See the
