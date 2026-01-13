@@ -448,9 +448,9 @@ class PropertiesPlugin implements Plugin<PluginAware> {
 
             // now add the one that takes a list...
             task.ext.requiredProperties = { String[] propertyNames ->
-                project.gradle.taskGraph.whenReady { graph ->
-                    if ( graph.hasTask(task.path) ) {
-                        for ( propertyName in propertyNames ) {
+                for ( propertyName in propertyNames ) {
+                    project.gradle.taskGraph.whenReady { graph ->
+                        if ( graph.hasTask(task.path) ) {
                             checkProperty(project, propertyName, task, "requiredProperties")
                         }
                     }
