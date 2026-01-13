@@ -18,7 +18,10 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.initialization.Settings
 import org.gradle.api.plugins.PluginAware
+import org.gradle.api.provider.ProviderFactory
 import org.slf4j.LoggerFactory
+
+import javax.inject.Inject
 
 /**
  * This is the main class for the properties plugin. When the properties plugin is applied to a
@@ -142,8 +145,11 @@ import org.slf4j.LoggerFactory
  *
  * @author Steven C. Saliman
  */
-class PropertiesPlugin implements Plugin<PluginAware> {
+abstract class PropertiesPlugin implements Plugin<PluginAware> {
     def logger = LoggerFactory.getLogger getClass()
+
+    @Inject
+    abstract ProviderFactory getProviders()
 
     /**
      * This method is called then the properties-plugin is applied.  It can be applied to both
@@ -154,9 +160,9 @@ class PropertiesPlugin implements Plugin<PluginAware> {
      */
     void apply(PluginAware pluginAware) {
         if ( pluginAware instanceof Settings ) {
-            doApply pluginAware, this.&buildPropertyFileListFromSettings
+            doApply pluginAware, { project, envFileDir, envName -> buildPropertyFileListFromSettings(project, envFileDir, envName) }
         } else if ( pluginAware instanceof Project ) {
-            doApply pluginAware, this.&buildPropertyFileListFromProject
+            doApply pluginAware, { project, envFileDir, envName -> buildPropertyFileListFromProject(project, envFileDir, envName) }
             // Register a task listener that adds the property checking helper methods.
             registerTaskListener(pluginAware)
         } else {
@@ -240,7 +246,7 @@ class PropertiesPlugin implements Plugin<PluginAware> {
      * @param envName the name of the environment to load.
      * @return a List of {@link PropertyFile}s
      */
-    private buildPropertyFileListFromProject(project, envFileDir, envName) {
+    protected buildPropertyFileListFromProject(project, envFileDir, envName) {
         def p = project
         def files = []
         while ( p != null ) {
@@ -281,7 +287,7 @@ class PropertiesPlugin implements Plugin<PluginAware> {
      * @param envName the name of the environment to load.
      * @return a List of {@link PropertyFile}s
      */
-    private buildPropertyFileListFromSettings(settings, envFileDir, envName) {
+    protected buildPropertyFileListFromSettings(settings, envFileDir, envName) {
         def fileDir = settings.settingsDir
         if ( envFileDir != '.' ) {
             fileDir = "${fileDir}/${envFileDir}"
@@ -328,7 +334,7 @@ class PropertiesPlugin implements Plugin<PluginAware> {
      * @param file the file to process
      * @return whether or not we found the file requested.
      */
-    private boolean processPropertyFile(pluginAware, PropertyFile file) {
+    protected boolean processPropertyFile(pluginAware, PropertyFile file) {
         def loaded = 0
         def systemProperties = 0
         def propFile = new File(file.filename)
@@ -368,15 +374,13 @@ class PropertiesPlugin implements Plugin<PluginAware> {
      */
     private processEnvironmentProperties(pluginAware) {
         def loaded = 0
-        System.getenv().each { key, value ->
-            if ( key.startsWith("ORG_GRADLE_PROJECT_") ) {
-                pluginAware.ext."${key.substring(19)}" = value
-                // add the property to the filter tokens, both in camel case and dot notation.
-                pluginAware.ext.filterTokens[key.substring(19)] = value;
-                def dotKey = camelCaseToDotNotation(key.substring(19))
-                pluginAware.ext.filterTokens[dotKey] = value
-                loaded++
-            }
+        providers.environmentVariablesPrefixedBy("ORG_GRADLE_PROJECT_").get().each { key, value ->
+            pluginAware.ext."${key.substring(19)}" = value
+            // add the property to the filter tokens, both in camel case and dot notation.
+            pluginAware.ext.filterTokens[key.substring(19)] = value;
+            def dotKey = camelCaseToDotNotation(key.substring(19))
+            pluginAware.ext.filterTokens[dotKey] = value
+            loaded++
         }
         logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from environment variables")
     }
@@ -388,15 +392,13 @@ class PropertiesPlugin implements Plugin<PluginAware> {
      */
     private processSystemProperties(pluginAware) {
         def loaded = 0
-        System.properties.each { key, value ->
-            if ( key.startsWith("org.gradle.project.") ) {
-                pluginAware.ext."${key.substring(19)}" = value
-                // add the property to the filter tokens, both in camel case and dot notation.
-                pluginAware.ext.filterTokens[key.substring(19)] = value;
-                def dotKey = camelCaseToDotNotation(key.substring(19))
-                pluginAware.ext.filterTokens[dotKey] = value
-                loaded++
-            }
+        providers.systemPropertiesPrefixedBy("org.gradle.project.").get().each { key, value ->
+            pluginAware.ext."${key.substring(19)}" = value
+            // add the property to the filter tokens, both in camel case and dot notation.
+            pluginAware.ext.filterTokens[key.substring(19)] = value;
+            def dotKey = camelCaseToDotNotation(key.substring(19))
+            pluginAware.ext.filterTokens[dotKey] = value
+            loaded++
         }
         logger.info("PropertiesPlugin:apply Loaded ${loaded} properties from system properties")
     }
@@ -500,7 +502,7 @@ class PropertiesPlugin implements Plugin<PluginAware> {
      * @param caller the name of the method calling this one.  Used to log who is doing the work.
      * @throws MissingPropertyException if the named property is not in the project.
      */
-    private checkProperty(project, propertyName, task, caller) {
+    protected checkProperty(project, propertyName, task, caller) {
         def taskName = task.path
         if ( !project.hasProperty(propertyName) ) {
             throw new MissingPropertyException("You must set the '${propertyName}' property for the '$taskName' task")
@@ -522,7 +524,7 @@ class PropertiesPlugin implements Plugin<PluginAware> {
      *         isn't specified during the build.
      * @param additionalInfo additional information to append to the warning message.
      */
-    private checkRecommendedProperty(project, propertyName, task, caller, defaultFile, additionalInfo) {
+    protected checkRecommendedProperty(project, propertyName, task, caller, defaultFile, additionalInfo) {
         def taskName = task.path
         if ( !project.hasProperty(propertyName) ) {
             def message = "WARNING: '${propertyName}', required by '$taskName' task, has no value, using default"
@@ -553,7 +555,7 @@ class PropertiesPlugin implements Plugin<PluginAware> {
      * @param propertyName the name of the property to convert
      * @return the converted property name
      */
-    private camelCaseToDotNotation(String propertyName) {
+    protected camelCaseToDotNotation(String propertyName) {
         if ( !propertyName.charAt(0).isLowerCase() ) {
             return propertyName
         }

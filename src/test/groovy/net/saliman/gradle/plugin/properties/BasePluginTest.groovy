@@ -14,6 +14,7 @@
  */
 package net.saliman.gradle.plugin.properties
 
+import org.gradle.api.provider.ProviderFactory
 import org.gradle.testfixtures.ProjectBuilder
 
 import static org.junit.Assert.assertEquals
@@ -36,7 +37,12 @@ import static org.junit.Assert.assertNull
  * @author Steven C. Saliman
  */
 class BasePluginTest {
-    def plugin = new PropertiesPlugin()
+    def plugin = new PropertiesPlugin() {
+        @Override
+        ProviderFactory getProviders() {
+            null
+        }
+    }
     def parentProject = null
     def childProject = null
     def parentTask = null
