@@ -450,8 +450,17 @@ class PropertiesPlugin implements Plugin<PluginAware> {
             task.ext.requiredProperties = { String[] propertyNames ->
                 project.gradle.taskGraph.whenReady { graph ->
                     if ( graph.hasTask(task.path) ) {
+                        def missingProperties = []
                         for ( propertyName in propertyNames ) {
-                            checkProperty(project, propertyName, task, "requiredProperties")
+                            try {
+                                checkProperty(project, propertyName, task, "requiredProperties")
+                            } catch (MissingPropertyException e) {
+                                // we don't want to stop on the  first error...
+                                missingProperties.add e.message
+                            }
+                        }
+                        if ( missingProperties  ) {
+                            throw new MissingPropertyException(missingProperties.join('\n'))
                         }
                     }
                 }
